@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#07070a">
+  <title>Conectar Agente MSY</title>
+  <link rel="stylesheet" href="/conectar.css">
+</head>
+<body>
+  <main class="card">
+    <header class="brand">
+      <span class="mark">MSY</span>
+      <span class="sub">Agente MSY · Portal de Membro</span>
+    </header>
+
+    <section id="carregando" class="state" aria-live="polite">
+      <p class="muted">Verificando o pedido…</p>
+    </section>
+
+    <section id="invalido" class="state" hidden>
+      <h1>Link de conexão inválido</h1>
+      <p id="invalidoMsg" class="muted">Volte ao app (Claude, ChatGPT…) e adicione o conector de novo.</p>
+    </section>
+
+    <section id="formulario" class="state" hidden>
+      <h1>Conectar <span id="app">o app</span> ao seu portal</h1>
+      <p class="muted">Com esta conexão, o assistente vê e faz no portal só o que você pode: suas tarefas, prazos,
+        reuniões e projetos; iniciar tarefa, mandar para revisão, registrar ata e enviar aviso pelo bot, sempre
+        perguntando antes de gravar.</p>
+      <ul class="facts">
+        <li>Depois de entrar, você volta para <strong id="destino">—</strong>.</li>
+        <li>Sua senha fica só nesta página do portal; o app nunca a vê.</li>
+        <li>Para desconectar, remova o conector nas configurações do app.</li>
+      </ul>
+      <p class="warn" role="note">Só continue se foi você que pediu a conexão agora.</p>
+      <p id="erro" class="error" role="alert" hidden></p>
+      <form id="form" novalidate>
+        <label for="email">E-mail do portal</label>
+        <input id="email" type="email" autocomplete="email" required>
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" autocomplete="current-password" required>
+        <button id="botao" type="submit">Conectar</button>
+      </form>
+      <a class="cancel" href="https://www.portalmsy.site/dashboard.html">Não fui eu / cancelar</a>
+    </section>
+
+    <section id="pronto" class="state" hidden aria-live="polite">
+      <h1>Conectado</h1>
+      <p class="muted">Voltando para o app…</p>
+    </section>
+  </main>
+  <script src="/conectar.js"></script>
+</body>
+</html>

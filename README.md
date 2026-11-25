@@ -16,6 +16,18 @@ usa do seu jeito.
 - **Reuniões que começam no que importa**: antes, o resumo de entregas, travas e decisões; depois, a transcrição vira
   ata no portal e os encaminhamentos viram tarefas com dono e prazo.
 
+## Onde funciona
+
+| Onde | Como |
+|---|---|
+| **Claude (web, desktop, celular)** | Configurações → Conectores → Adicionar conector personalizado → URL do MCP remoto (abaixo). Entre com a conta do portal. |
+| **ChatGPT (web, celular)** | Configurações → Apps e conectores → Modo desenvolvedor → Criar conector → mesma URL. |
+| **Claude Code / Codex (PC)** | Plugin (abaixo): MCP, skills, comandos `/msy:*` e as proteções a cada edição. Sem o plugin, dá para usar só o MCP remoto. |
+| **Qualquer app com MCP remoto** | A mesma URL, com login OAuth. |
+
+URL do MCP remoto: **`https://<domínio do agente>/mcp`** (veja `docs/remoto.md`). Nos apps sem plugin, o agente
+carrega o contexto da Masayoshi e os guias por papel pela ferramenta `guia`, e os fluxos prontos aparecem como prompts.
+
 ## Instalar
 
 Precisa de Node 18 ou mais novo.

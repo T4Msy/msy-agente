@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 — 2026-11-25
+
+Agente em qualquer app: servidor MCP remoto.
+
+- MCP remoto (Streamable HTTP) com login OAuth 2.1 pelo portal: funciona como conector no Claude (web, desktop,
+  celular), no ChatGPT e em qualquer app com MCP remoto; também no Claude Code/Codex sem o plugin.
+- OAuth sem estado: registro do app (RFC 7591), PKCE S256 obrigatório, retorno só para Claude, ChatGPT e
+  localhost; código, refresh token e pedido cifrados (AES-256-GCM). O acesso é a sessão do próprio membro.
+- Página `/conectar` (sem scripts de terceiros, CSP restrita) onde o membro entra com a conta do portal.
+- Ferramenta `guia` (contexto da Masayoshi, skills e regras para apps sem plugin) e prompts MCP com os mesmos
+  fluxos dos comandos `/msy:*`. `ler_transcricao` aceita o texto da transcrição.
+- Deploy na Vercel (`api/remoto.mjs`, `vercel.json`); servidor local `npm run remoto`.
+
 ## 0.3.0 — 2026-11-25
 
 WhatsApp pelo bot Corvus.

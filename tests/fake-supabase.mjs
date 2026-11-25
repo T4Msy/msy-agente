@@ -61,7 +61,8 @@ export function startFakeSupabase({ today } = {}) {
   const state = { botAllowed: true, whatsapp: [], deny: new Set(), access: new Set(), refresh: new Set(), refreshCalls: 0, reuseAttempts: 0, rpc: [], patches: [], inserts: [], n: 0 };
   const issue = () => {
     state.n += 1;
-    const at = `at-${state.n}-acesso-falso`; const rt = `rt-${state.n}-renovacao-falsa`;
+    const jwt = (payload) => ['{"alg":"HS256","typ":"JWT"}', JSON.stringify(payload)].map((x) => Buffer.from(x).toString('base64url')).join('.') + `.assinatura-falsa-${state.n}`;
+    const at = jwt({ sub: MEMBRO.id, email: MEMBRO.email, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600, n: state.n }); const rt = `rt-${state.n}-renovacao-falsa`;
     state.access.add(at); state.refresh.add(rt);
     return { access_token: at, refresh_token: rt, expires_in: 3600, token_type: 'bearer', user: { id: MEMBRO.id, email: MEMBRO.email } };
   };

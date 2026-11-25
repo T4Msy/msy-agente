@@ -9,7 +9,9 @@ o desenho está em [`docs/arquitetura.md`](docs/arquitetura.md); o contrato com 
 | Pasta | O que tem |
 |---|---|
 | `lib/` | Núcleo: config pública, sessão (`credentials.mjs`), cliente Supabase sem dependências, operações do portal, formatação, login pelo navegador, perfil pessoal, `.ics` |
-| `mcp/server.mjs` | Servidor MCP `msy-portal` (stdio, JSON-RPC na mão) |
+| `mcp/server.mjs` | Servidor MCP `msy-portal` (stdio local; `remote: true` no modo HTTP) |
+| `lib/remote.mjs`, `lib/oauth.mjs`, `api/remoto.mjs`, `public/` | MCP remoto + OAuth sem estado na Vercel (ver `docs/remoto.md`) |
+| `lib/guias.mjs` | Skills, regras e comandos servidos como ferramenta `guia` e prompts MCP |
 | `bin/msy.mjs` | CLI: login, status, tarefas, agenda, ics, perfil, doctor |
 | `hooks/` | `msy-hook.mjs` (session-start, prompt, pre-shell, post-edit), `rules.mjs`, `checks.mjs`, `hooks.json` |
 | `rules/` | Regras curtas que entram no contexto só quando a situação casa (ver `rules/_LEIA.md`) |
