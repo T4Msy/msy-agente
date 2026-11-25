@@ -7,7 +7,7 @@ description: Marketing da Masayoshi Company — marca (cores, fontes, corvo), pi
 
 Objetivo: a MSY aparecer toda semana com conteúdo útil, na identidade da marca, e cada post levar a uma conversa no
 WhatsApp comercial. Ferramentas do `msy-portal`: `calendario_conteudo`, `gerir_conteudo` (criar, editar, status,
-métricas). Só diretoria ou quem tem a permissão "Marketing e Comercial". Leads e proposta: skill `msy-comercial`.
+métricas), e da Meta ao vivo, só leitura: `instagram_metricas` e `anuncios`. Só diretoria ou quem tem a permissão "Marketing e Comercial". Leads e proposta: skill `msy-comercial`.
 
 ## Marca
 
@@ -41,7 +41,7 @@ Na segunda, abra `calendario_conteudo` e preencha os buracos da semana com `geri
 
 - ideia → rascunho → aprovado (a diretoria ou quem cuida do marketing aprova) → agendado → publicado (com o link).
 - Publicar é no app da rede; o agente só registra.
-- D+3 e D+7 depois de publicar: `gerir_conteudo` acao=metricas com alcance, salvamentos, compartilhamentos,
+- D+3 e D+7 depois de publicar: leia os números em `instagram_metricas` e guarde com `gerir_conteudo` acao=metricas: alcance, salvamentos, compartilhamentos,
   conversas (quantas pessoas chamaram no WhatsApp) e, se for anúncio, gasto_cents.
 - O que importa: conversas no WhatsApp e custo por conversa (gasto ÷ conversas). Salvamento é o melhor sinal de
   conteúdo útil; curtida sozinha diz pouco.
@@ -50,4 +50,6 @@ Na segunda, abra `calendario_conteudo` e preencha os buracos da semana com `geri
 
 - Antes: objetivo (conversas no WhatsApp), público (cidade, idade), orçamento e duração, e o que medir em D+3.
 - Comece pequeno, com o criativo que já foi bem organicamente; troque só uma coisa por vez.
+- Durante: `anuncios` (periodo=7d) mostra gasto, cliques e conversas por campanha. Pausar, mudar orçamento ou criar
+  anúncio é no Gerenciador de Anúncios, por quem cuida da conta; o agente não mexe em anúncio.
 - Depois: registre o aprendizado no conteúdo (resumo nas métricas) e conte à diretoria.

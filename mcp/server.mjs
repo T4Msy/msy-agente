@@ -18,6 +18,7 @@ import { createComunicacao, comunicadosText, jornalText, justificationsText, COM
 import { createDiretoria, PERMISSOES, ACOES_MEMBRO, ACOES_COMISSAO, mesLabel } from '../lib/diretoria.mjs';
 import { createGestao, projectLabel, PROJ_STATUS, PROJ_TIPO, PRIORIDADES } from '../lib/gestao.mjs';
 import { createSupervisao, remindersText, casesText, LEMBRETE_CATEGORIAS, LEMBRETE_ACOES, CASO_ACOES, ALERTA_ACOES } from '../lib/supervisao.mjs';
+import { createMeta, instagramText, anunciosText, PERIODOS_IG, PERIODOS_ADS } from '../lib/meta.mjs';
 import { createMarketing, calendarText, leadsText, leadText, catalogText, proposalText, CANAIS, FORMATOS, POST_STATUS, CONTEUDO_ACOES, INTERESSES, ESTAGIOS, LEAD_ACOES, NOTA_TIPOS } from '../lib/marketing.mjs';
 import { createMembro, libraryText, profileText, swapsText, BIB_CATEGORIAS, SUG_CATEGORIAS, SUG_STATUS, EVENTO_ACOES } from '../lib/membro.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
@@ -66,6 +67,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const membro = createMembro(client);
   const supervisao = createSupervisao(client);
   const marketing = createMarketing(client);
+  const meta = createMeta(client);
   return [
     {
       name: 'guia',
@@ -993,6 +995,20 @@ export function buildTools(portal, client, { remote = false } = {}) {
       inputSchema: { type: 'object', properties: {} },
       annotations: { title: 'Tabela de preços', ...READ },
       run: async () => catalogText(await marketing.catalog()),
+    },
+    {
+      name: 'instagram_metricas',
+      description: 'Marketing e Comercial: números do Instagram da MSY ao vivo pela Meta: seguidores, alcance, visualizações e interações da conta no período, e os posts recentes com curtidas, comentários, alcance e salvamentos. Só leitura. Use para relatório da semana, para ver o que funcionou e antes de planejar conteúdo.',
+      inputSchema: { type: 'object', properties: { dias: { type: 'integer', enum: PERIODOS_IG, description: 'Período da conta (padrão 7).' }, posts: { type: 'integer', minimum: 0, maximum: 12, description: 'Quantos posts recentes (padrão 6).' } } },
+      annotations: { title: 'Métricas do Instagram', ...READ },
+      run: async (a) => instagramText(await meta.instagram(a)),
+    },
+    {
+      name: 'anuncios',
+      description: 'Marketing e Comercial: desempenho dos anúncios da Meta (Instagram e Facebook) ao vivo: gasto, alcance, cliques, CTR e conversas iniciadas no WhatsApp, por campanha ou por anúncio, e as campanhas ativas. Só leitura: não cria, pausa nem muda anúncio. Conversa iniciada não é lead nem venda.',
+      inputSchema: { type: 'object', properties: { periodo: { type: 'string', enum: Object.keys(PERIODOS_ADS), description: 'Padrão 7d.' }, nivel: { type: 'string', enum: ['campanha', 'anuncio'], description: 'Padrão campanha.' } } },
+      annotations: { title: 'Anúncios da Meta', ...READ },
+      run: async (a) => anunciosText(await meta.anuncios(a)),
     },
     {
       name: 'proposta',

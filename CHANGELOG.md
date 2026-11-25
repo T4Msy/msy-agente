@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.15.0 · 25/11/2026
+
+Ponte da Meta, só leitura, para quem tem Marketing e Comercial (ou diretoria):
+- `instagram_metricas`: seguidores, alcance, visualizações e interações da conta no período, e os posts recentes com alcance e salvamentos.
+- `anuncios`: gasto, alcance, cliques, CTR e conversas iniciadas no WhatsApp por campanha ou anúncio, e as campanhas ativas.
+- O token fica só no servidor do conector remoto (`META_ACCESS_TOKEN`, usuário do sistema do Gerenciador de Negócios); nunca aparece em resposta nem erro. `META_IG_USER_ID`, `META_AD_ACCOUNT_ID` e `META_GRAPH_VERSION` são opcionais.
+
 ## 0.14.0 · 25/11/2026
 
 Marketing e Comercial pelo agente (diretoria ou a permissão nova `agente_marketing_comercial`):
