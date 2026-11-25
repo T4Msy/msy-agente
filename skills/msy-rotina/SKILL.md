@@ -52,4 +52,7 @@ O agendamento é do host, não do portal. Use o recurso que existir na sessão:
    sincronize com minha agenda os prazos novos."
 Confirme horário e fuso (padrão America/Sao_Paulo) antes de criar. Diga como desligar.
 
+Lembrete no celular: quem está liberado no bot Corvus pode receber o resumo no próprio WhatsApp com
+`enviar_whatsapp` (membro = o próprio id, de `quem_sou`). Na rotina, escreva que esse envio está autorizado.
+
 Se não houver agendador na sessão, ofereça o resumo sob demanda (`/msy:hoje`) e explique a limitação.

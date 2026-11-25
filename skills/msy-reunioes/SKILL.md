@@ -39,13 +39,20 @@ Em uma frase: <o principal: ex. "3 entregas, 2 travas no Portal e 1 decisão de 
 Regras: decisões primeiro na pauta (é o que precisa do grupo junto); entregas são leitura rápida. Nada de expor
 alguém: "sem entrega registrada" é fato do portal, não acusação.
 
-Entrega: na conversa. Se o membro pedir, salve em `.md` ou mande pela ferramenta que ele conectou (e-mail, chat).
+Entrega: na conversa e, se o membro quiser, **no grupo do WhatsApp pelo bot Corvus**:
+1. `whatsapp_grupos` → ache o grupo da reunião (pelo nome) e confirme com o membro.
+2. Encurte para o WhatsApp: até ~1.500 caracteres, sem a pauta detalhada se ficar longo. O markdown é convertido.
+3. Mostre o texto e o destino; com o sim, `enviar_whatsapp` (confirmado=true, `nome` = nome do grupo).
+Só funciona para quem está liberado em "Quem pode usar o bot" (Central do Bot); para os outros, o portal recusa e o
+resumo fica na conversa.
 
 ### Automático antes de cada reunião
-Com agendador do host (Claude Code/Codex), crie uma rotina diária pela manhã (confirme horário e fuso,
-padrão America/Sao_Paulo):
-"Use msy-portal: reunioes (dias=1). Para cada reunião de hoje, rode preparar_reuniao e me entregue o resumo no
-formato da skill msy-reunioes até 1 hora antes do horário." Para a call semanal, uma rotina no dia dela basta.
+Com agendador do host (Claude Code/Codex), crie uma rotina diária pela manhã (confirme horário, fuso
+America/Sao_Paulo e o grupo de destino):
+"Use msy-portal: reunioes (dias=1). Para cada reunião de hoje, rode preparar_reuniao, escreva o resumo no formato
+da skill msy-reunioes e envie no grupo <nome> (grupo=<id>) com enviar_whatsapp. Este envio automático está
+autorizado por mim; use confirmado=true." Sem essa autorização escrita na rotina, a rotina só entrega o resumo ao
+membro. Para a call semanal, uma rotina no dia dela basta.
 
 ## 2. Durante: gravar e transcrever
 
@@ -96,3 +103,5 @@ Depois de mostrar a ata e o membro aprovar:
 2. Encaminhamentos de projeto → `criar_tarefa` (só gestor do projeto; ids dos participantes via `projeto`). Mostre
    a lista antes e crie só com o sim. Título com verbo e resultado, critério de aceite na descrição, origem = a reunião.
 3. Prazos e a próxima reunião → agenda do membro (skill `msy-rotina`, "Passar para a agenda pessoal").
+4. Se o membro quiser, mande no grupo um resumo curto (decisões + encaminhamentos com dono e prazo) com
+   `enviar_whatsapp`, do mesmo jeito do resumo pré-reunião.

@@ -11,6 +11,8 @@ usa do seu jeito.
   RLS, XSS, permissão só no front, interface sem estados, push forçado na `main`.
 - **Organiza a rotina**: resumo do dia, lembretes e envio de prazos e reuniões para a agenda pessoal (com a ferramenta
   de agenda que cada um conectar, ou por arquivo `.ics`).
+- **Avisos no WhatsApp pelo bot Corvus**: o resumo da reunião, a ata ou um lembrete vão para o grupo ou para o
+  privado, para quem está liberado na Central do Bot do portal.
 - **Reuniões que começam no que importa**: antes, o resumo de entregas, travas e decisões; depois, a transcrição vira
   ata no portal e os encaminhamentos viram tarefas com dono e prazo.
 

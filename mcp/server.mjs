@@ -11,6 +11,7 @@ import { meText, tasksText, briefText, agendaText, reviewQueueText, DATA_NOTICE 
 import fs from 'node:fs';
 import { createReunioes, meetingsText, briefFacts } from '../lib/reunioes.mjs';
 import { parseTranscript, transcriptText, transcriptStats } from '../lib/transcricao.mjs';
+import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { VERSION } from '../lib/version.mjs';
@@ -18,7 +19,7 @@ const LOGIN_CMD = `node "${path.join(ROOT, 'bin', 'msy.mjs')}" login`;
 
 const INSTRUCTIONS = [
   'Conexão com o Portal de Membro MSY (portalmsy.site), com a conta do membro que está usando o agente.',
-  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas e criar tarefas (gestor), e para',
+  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), enviar avisos no WhatsApp pelo bot Corvus, e para',
   'iniciar uma tarefa, atualizar o checklist e a nota de execução e mandar para revisão. As regras do portal valem:',
   'o agente só vê e muda o que o membro pode ver e mudar. Aprovar tarefa é sempre decisão humana do gestor, no portal.',
   DATA_NOTICE,
@@ -32,6 +33,7 @@ const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: fal
 export function buildTools(portal, client) {
   const url = client.config.portalUrl;
   const reunioes = createReunioes(client);
+  const whatsapp = createWhatsapp(client);
   return [
     {
       name: 'quem_sou',
@@ -177,6 +179,39 @@ export function buildTools(portal, client) {
         if (a.confirmado !== true) return { text: 'Não criei: mostre a tarefa ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
         const t = await reunioes.createTask({ projectId: a.project_id, titulo: a.titulo, descricao: a.descricao, responsavel: a.responsavel, prazo: a.prazo, prioridade: a.prioridade, checklist: a.checklist || [], origem: a.origem });
         return `Tarefa criada: "${t.title}" (id ${t.id})${a.responsavel ? '; o responsável foi notificado no portal' : ''}.`;
+      },
+    },
+    {
+      name: 'whatsapp_grupos',
+      description: 'Grupos do WhatsApp onde o bot Corvus está, para enviar avisos pelo portal. Só funciona para quem está liberado em "Quem pode usar o bot" na Central do Bot.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { title: 'Grupos do WhatsApp (bot Corvus)', ...READ },
+      run: async () => {
+        const st = await whatsapp.status();
+        const head = st.conectado ? 'Bot Corvus conectado.' : 'Bot Corvus DESCONECTADO: envios vão falhar até reconectar.';
+        if (!st.grupos.length) return `${head} Nenhum grupo.`;
+        return [head, ...st.grupos.map((g) => `- ${g.nome} (${g.participantes ?? '?'} pessoas, Corvus ${g.ativo ? 'ativo' : 'desativado'}) · grupo=${g.id}`)].join('\n');
+      },
+    },
+    {
+      name: 'enviar_whatsapp',
+      description: `Envia uma mensagem pelo bot Corvus num grupo do WhatsApp (id de whatsapp_grupos) ou no privado de um membro (user_id). O markdown vira formatação do WhatsApp; até ${WHATSAPP_MAX} caracteres. O envio fica registrado no portal em nome do membro. Use para o resumo pré-reunião, a ata e avisos. confirmado=true só depois que o membro aprovou este envio na conversa, ou quando a rotina/perfil dele autoriza por escrito o envio automático para esse destino.`,
+      inputSchema: {
+        type: 'object',
+        properties: {
+          grupo: { type: 'string', description: 'id do grupo (termina em @g.us)' },
+          membro: idProp('Membro (privado)'),
+          nome: { type: 'string', description: 'Nome do grupo ou da pessoa, para o histórico do portal.' },
+          mensagem: { type: 'string' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['mensagem', 'confirmado'],
+      },
+      annotations: { title: 'Enviar pelo WhatsApp', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não enviei: mostre a mensagem e o destino ao membro e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await whatsapp.send({ grupo: a.grupo, membro: a.membro, nome: a.nome, mensagem: a.mensagem });
+        return `Enviado pelo Corvus para ${a.nome || a.grupo || 'o membro'} (${r.caracteres} caracteres). Registrado no histórico do bot no portal.`;
       },
     },
     {

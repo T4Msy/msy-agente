@@ -38,6 +38,7 @@ Projeto Supabase `lldzgkxpoyqauxdcjyaw` · repositório `T4Msy/Portal-Membro-Msy
 | Checklist | `PATCH/POST task_checklist_items` | responsável ou gestor |
 | Histórico | `POST project_history` com `action='agente_*'`, `metadata.via='msy-agente'` | membro do projeto, `actor_id = ele mesmo` |
 | Ata | `POST meeting_minutes` (+ `meeting_minute_viewers`) | só quem tem `gerenciar_reunioes` |
+| Mensagem no WhatsApp | `GET/POST {portal}/api/whatsapp` (Vercel → bot Corvus) com o JWT do membro | quem está em `bot_settings.allowed_senders`; envio registrado em `bot_messages` |
 | Criar tarefa | `POST project_tasks` (+ checklist, histórico, `rpc/notify_project`) | só gestor do projeto (`can_manage_project`) |
 
 Aprovar (`task_approve`) e pedir ajustes (`task_request_changes`) **não** são expostos.

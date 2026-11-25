@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 — 2026-11-25
+
+WhatsApp pelo bot Corvus.
+
+- `whatsapp_grupos` e `enviar_whatsapp`: envio em grupo ou no privado pela ponte do portal (`/api/whatsapp`), com o
+  login do membro; só para quem está liberado na Central do Bot; todo envio fica no histórico do bot. Markdown vira
+  formatação do WhatsApp. Pede confirmação, salvo rotina com autorização escrita.
+- Resumo pré-reunião e ata podem ir para o grupo; lembrete no privado.
+- Endereço padrão do portal passa a ser `https://www.portalmsy.site`, e as chamadas ao portal tratam o
+  redirecionamento sem perder o login (o `fetch` descarta o `Authorization` ao mudar de host).
+- `quem_sou` mostra o id do membro.
+
 ## 0.2.1 — 2026-11-25
 
 - Sem LGPD no agente: saem as regras `sec-dados-pessoais` e `sec-gravacao-reuniao` e as menções nas skills de

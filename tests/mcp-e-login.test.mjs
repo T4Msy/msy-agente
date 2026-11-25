@@ -91,7 +91,7 @@ test('MCP: handshake, ferramentas e confirmação obrigatória nas escritas', as
     s.notify('notifications/initialized');
     const list = await s.call('tools/list');
     const names = list.result.tools.map((t) => t.name);
-    assert.deepEqual(names.sort(), ['agenda', 'checklist', 'criar_tarefa', 'enviar_revisao', 'fila_revisao', 'iniciar_tarefa', 'ler_transcricao', 'minhas_tarefas', 'nota_execucao', 'notificacoes', 'preparar_reuniao', 'projeto', 'quem_sou', 'registrar_ata', 'reunioes', 'tarefa'].sort());
+    assert.deepEqual(names.sort(), ['agenda', 'checklist', 'criar_tarefa', 'enviar_revisao', 'fila_revisao', 'iniciar_tarefa', 'ler_transcricao', 'minhas_tarefas', 'nota_execucao', 'notificacoes', 'preparar_reuniao', 'projeto', 'quem_sou', 'registrar_ata', 'reunioes', 'tarefa', 'whatsapp_grupos', 'enviar_whatsapp'].sort());
     assert.ok(!names.some((n) => /aprova|ajuste/.test(n)), 'aprovar não pode existir');
     for (const t of list.result.tools) assert.equal(t.inputSchema.type, 'object');
 

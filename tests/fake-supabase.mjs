@@ -58,7 +58,7 @@ export function fixtures(today = todayISO()) {
 
 export function startFakeSupabase({ today } = {}) {
   const db = fixtures(today);
-  const state = { deny: new Set(), access: new Set(), refresh: new Set(), refreshCalls: 0, reuseAttempts: 0, rpc: [], patches: [], inserts: [], n: 0 };
+  const state = { botAllowed: true, whatsapp: [], deny: new Set(), access: new Set(), refresh: new Set(), refreshCalls: 0, reuseAttempts: 0, rpc: [], patches: [], inserts: [], n: 0 };
   const issue = () => {
     state.n += 1;
     const at = `at-${state.n}-acesso-falso`; const rt = `rt-${state.n}-renovacao-falsa`;
@@ -95,6 +95,13 @@ export function startFakeSupabase({ today } = {}) {
 
       const token = String(req.headers.authorization || '').replace(/^Bearer /, '');
       if (!state.access.has(token)) return send(401, { message: 'JWT expired', code: 'PGRST301' });
+      if (url.pathname === '/api/whatsapp') {
+        if (!state.botAllowed) return send(403, { erro: 'Você não tem acesso ao bot.' });
+        if (req.method === 'GET') return send(200, { conectado: true, grupos: [{ id: '120363000000000001@g.us', nome: 'Masayoshi Geral', participantes: 14, ativo: true }], comWhatsapp: [] });
+        if (!body.mensagem) return send(400, { erro: 'Escreva a mensagem.' });
+        state.whatsapp.push(body);
+        return send(200, { ok: true });
+      }
       const route = url.pathname.replace('/rest/v1/', '');
       if (route.startsWith('rpc/')) {
         const fn = route.slice(4);
