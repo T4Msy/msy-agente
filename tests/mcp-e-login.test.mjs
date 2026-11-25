@@ -91,7 +91,7 @@ test('MCP: handshake, ferramentas e confirmação obrigatória nas escritas', as
     s.notify('notifications/initialized');
     const list = await s.call('tools/list');
     const names = list.result.tools.map((t) => t.name);
-    assert.deepEqual(names.sort(), ['agenda', 'checklist', 'enviar_revisao', 'fila_revisao', 'iniciar_tarefa', 'minhas_tarefas', 'nota_execucao', 'notificacoes', 'projeto', 'quem_sou', 'tarefa'].sort());
+    assert.deepEqual(names.sort(), ['agenda', 'checklist', 'criar_tarefa', 'enviar_revisao', 'fila_revisao', 'iniciar_tarefa', 'ler_transcricao', 'minhas_tarefas', 'nota_execucao', 'notificacoes', 'preparar_reuniao', 'projeto', 'quem_sou', 'registrar_ata', 'reunioes', 'tarefa'].sort());
     assert.ok(!names.some((n) => /aprova|ajuste/.test(n)), 'aprovar não pode existir');
     for (const t of list.result.tools) assert.equal(t.inputSchema.type, 'object');
 
@@ -103,6 +103,17 @@ test('MCP: handshake, ferramentas e confirmação obrigatória nas escritas', as
     const semConfirmar = await s.call('tools/call', { name: 'iniciar_tarefa', arguments: { task_id: TAREFA, confirmado: false } });
     assert.equal(semConfirmar.result.isError, true);
     assert.equal(fake.state.rpc.length, before, 'sem confirmação não chama o portal');
+    for (const [name, args] of [['registrar_ata', { titulo: 't', data: '2026-01-01', conteudo: 'x', confirmado: false }], ['criar_tarefa', { project_id: '10000000-0000-4000-8000-000000000001', titulo: 't', confirmado: false }]]) {
+      const inserts = fake.state.inserts.length;
+      const r = await s.call('tools/call', { name, arguments: args });
+      assert.equal(r.result.isError, true, name);
+      assert.equal(fake.state.inserts.length, inserts, `${name} sem confirmação não grava`);
+    }
+    const prep = await s.call('tools/call', { name: 'preparar_reuniao', arguments: {} });
+    assert.equal(prep.result.isError, false);
+    assert.match(prep.result.content[0].text, /## Para decidir/);
+    const rel = await s.call('tools/call', { name: 'ler_transcricao', arguments: { caminho: 'relativo.vtt' } });
+    assert.equal(rel.result.isError, true);
 
     const ruim = await s.call('tools/call', { name: 'tarefa', arguments: { task_id: 'nao-e-uuid' } });
     assert.equal(ruim.result.isError, true);

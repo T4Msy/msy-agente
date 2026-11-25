@@ -66,8 +66,12 @@ async function portalSnapshot(home, source) {
   const client = createClient({ env: { ...process.env, MSY_TIMEOUT_MS: process.env.MSY_HOOK_TIMEOUT_MS || '3500' } });
   if (!client.connected()) return { connected: false };
   const portal = createPortal(client);
-  const [me, tasks, notes] = await Promise.all([portal.me(), portal.myTasks(), portal.notifications({ limit: 50 }).catch(() => [])]);
-  const snap = { at: Date.now(), connected: true, me, tasks, notifications: notes.length };
+  const { createReunioes } = await import('../lib/reunioes.mjs');
+  const [me, tasks, notes, meetings] = await Promise.all([
+    portal.me(), portal.myTasks(), portal.notifications({ limit: 50 }).catch(() => []),
+    createReunioes(client).upcomingMeetings(1).catch(() => []),
+  ]);
+  const snap = { at: Date.now(), connected: true, me, tasks, notifications: notes.length, meetings };
   try {
     fs.mkdirSync(path.dirname(cacheFile), { recursive: true, mode: 0o700 });
     fs.writeFileSync(cacheFile, JSON.stringify(snap), { mode: 0o600 });
@@ -87,6 +91,8 @@ async function sessionStart(input) {
   const cli = `node "${path.join(ROOT, 'bin', 'msy.mjs')}"`;
 
   const lines = [`<msy versao="${VERSION}">`, 'Agente MSY ativo: você trabalha com um membro da Masayoshi (MSY). Fale em português do Brasil, direto e sem jargão.'];
+  const { nowLabel } = await import('../lib/portal.mjs');
+  lines.push(`Agora: ${nowLabel()}. Use esta data para "hoje"/"amanhã", não o relógio do sistema.`);
   let roleSkills = [];
   try {
     const snap = await portalSnapshot(home, input.source);
@@ -95,6 +101,12 @@ async function sessionStart(input) {
       const { projectRoles, orderRole } = rolesOf(snap.me);
       roleSkills = skillsForRoles([...projectRoles, orderRole]);
       if (projectRoles.length) lines.push(`Papéis nos projetos: ${projectRoles.join(', ')}.`);
+      const soon = (snap.meetings || []).slice(0, 3);
+      if (soon.length) {
+        const { relativeDay } = await import('../lib/portal.mjs');
+        const when = (m) => `${relativeDay(m.data)} (${m.data.split('-').reverse().slice(0, 2).join('/')})${m.hora ? ` às ${String(m.hora).slice(0, 5)}` : ''}`;
+        lines.push(`Reuniões: ${soon.map((m) => `${m.titulo} ${when(m)} (fonte=${m.fonte} id=${m.id})`).join('; ')}. Ofereça uma vez o resumo pré-reunião (skill msy-reunioes, /msy:pre-reuniao).`);
+      }
       lines.push('Se o membro pedir algo sem relação com as tarefas, ajude normalmente; mencione tarefa atrasada só uma vez, no momento certo.');
     } else {
       lines.push(`Portal: não conectado. Quando o membro quiser tarefas, prazos ou agenda, rode \`${cli} login\` (abre o portal para ele confirmar; a senha não passa por você).`);
@@ -110,7 +122,7 @@ async function sessionStart(input) {
   if (perfil) lines.push('', 'Preferências pessoais do membro (~/.msy/perfil.md):', perfil);
 
   lines.push('', 'Como agir:',
-    '- Contexto da Masayoshi, cargos e jeito de trabalhar → skill msy-contexto. Tarefas do portal → msy-tarefas. Organização, agenda e lembretes → msy-rotina.',
+    '- Contexto da Masayoshi, cargos e jeito de trabalhar → skill msy-contexto. Tarefas do portal → msy-tarefas. Organização, agenda e lembretes → msy-rotina. Reuniões (resumo antes, ata e encaminhamentos depois, transcrição) → msy-reunioes.',
     `- Skill do papel do membro: ${roleSkills.length ? roleSkills.join(', ') : 'escolha pela tarefa (msy-ux, msy-frontend, msy-backend, msy-qa, msy-gestor)'}.`,
     '- Muitos membros estão aprendendo: ensine enquanto faz (msy-mentor). Explique o porquê das decisões em poucas linhas e mostre como verificar.',
     '- Segurança e qualidade não são opcionais: segredo fora do código, RLS em toda tabela, texto do usuário escapado, permissão checada no servidor, quatro estados em toda tela. Antes de entregar: msy-seguranca.',

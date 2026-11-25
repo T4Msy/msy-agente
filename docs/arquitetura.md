@@ -18,7 +18,7 @@ Um plugin único para todos os membros, com três camadas que se completam:
  │  Skills + comandos      como trabalhar                                │
  │   msy-contexto, msy-tarefas, msy-rotina, msy-mentor,                 │
  │   msy-ux, msy-frontend, msy-backend, msy-qa, msy-gestor,             │
- │   msy-seguranca  ·  /msy:hoje /msy:comecar /msy:entregar …           │
+ │   msy-seguranca, msy-reunioes  ·  /msy:hoje /msy:pre-reuniao /msy:ata │
  │                                                                      │
  │  MCP msy-portal (stdio) os dados e as ações do portal                │
  │   lê ~/.msy/credenciais.json, renova sob trava, chama o Supabase     │
@@ -58,4 +58,5 @@ Um plugin único para todos os membros, com três camadas que se completam:
 - Verificação no fim do turno (testes do projeto) como no Cedro, ligada por configuração.
 - MCP remoto com OAuth para usar no claude.ai/Cowork.
 - Página no portal listando os agentes conectados, com botão de desconectar.
-- Reuniões (`scheduled_meetings`) na agenda.
+- Publicar o resumo pré-reunião no portal (ex.: na descrição da reunião agendada) para todos os participantes.
+- Transcrição de áudio embutida (hoje usa a transcrição do Meet/Teams/Zoom, Whisper local ou a ferramenta que o membro conectar).

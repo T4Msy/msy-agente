@@ -7,6 +7,9 @@
 //   tarefa <id>          briefing completo de uma tarefa
 //   agenda [dias]        tarefas, atividades e eventos com data (padrão 14 dias)
 //   ics [dias] [arquivo] gera um .ics com a agenda para importar em qualquer calendário
+//   reunioes [dias]      próximas reuniões
+//   reuniao [fonte id]   insumos do resumo pré-reunião (sem argumentos: a próxima)
+//   transcricao <arq>    limpa uma transcrição (.vtt/.srt/.txt/.json) para colar no agente
 //   perfil               cria/mostra o caminho do seu perfil pessoal (~/.msy/perfil.md)
 //   doctor               confere Node, conexão e sessão
 import path from 'node:path';
@@ -17,6 +20,8 @@ import { meText, tasksText, briefText, agendaText } from '../lib/format.mjs';
 import { browserLogin } from '../lib/browser-login.mjs';
 import { ensurePerfil } from '../lib/perfil.mjs';
 import { toIcs } from '../lib/ics.mjs';
+import { createReunioes, meetingsText, briefFacts } from '../lib/reunioes.mjs';
+import { parseTranscript, transcriptText } from '../lib/transcricao.mjs';
 import fs from 'node:fs';
 import { credentialsPath } from '../lib/credentials.mjs';
 
@@ -88,10 +93,16 @@ const COMMANDS = {
     fs.writeFileSync(file, toIcs(a));
     out(`${a.itens.length} item(ns) em ${file}. Importe no Google Agenda em Configurações → Importar e exportar.`);
   },
+  reunioes: async () => out(meetingsText(await createReunioes(client).upcomingMeetings(Math.min(Number(args[0]) || 14, 60)))),
+  reuniao: async () => out(briefFacts(await createReunioes(client).meetingBrief({ fonte: args[0], id: args[1] }))),
+  transcricao: async () => {
+    if (!args[0]) throw new Error('Uso: msy transcricao <arquivo.vtt|.srt|.txt|.json>');
+    out(transcriptText(parseTranscript(fs.readFileSync(path.resolve(args[0]), 'utf8'), args[0])));
+  },
   perfil: async () => { const p = ensurePerfil(client.config.home); out(`${p.created ? 'Criei' : 'Seu perfil está em'} ${p.file}${p.created ? ' — edite com suas preferências.' : ''}`); },
   doctor,
   caminho: async () => out(ROOT),
-  ajuda: async () => out(['msy — agente da Masayoshi', '', 'login [--terminal] · logout · status · tarefas · tarefa <id> · agenda [dias] · ics [dias] [arquivo] · perfil · doctor'].join('\n')),
+  ajuda: async () => out(['msy — agente da Masayoshi', '', 'login [--terminal] · logout · status · tarefas · tarefa <id> · agenda [dias] · ics [dias] [arquivo]', 'reunioes [dias] · reuniao [fonte id] · transcricao <arquivo> · perfil · doctor'].join('\n')),
 };
 
 const fn = COMMANDS[cmd] || COMMANDS.ajuda;

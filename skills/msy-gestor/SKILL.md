@@ -21,6 +21,10 @@ no briefing de todas as tarefas.
 - `fila_revisao` mostra o que espera você. Revisão parada trava o membro: priorize.
 - `minhas_tarefas`/`projeto` para ver andamento; atraso → conversa cedo, não cobrança no fim.
 
+## Reuniões de acompanhamento
+Antes: `/msy:pre-reuniao` (entregas, travas, decisões). Depois: `/msy:ata` com a transcrição; os encaminhamentos
+viram tarefas com `criar_tarefa` (você é gestor, então o portal deixa). Detalhes na skill `msy-reunioes`.
+
 ## Revisar entrega
 O agente ajuda a revisar (código, tela, testes), mas aprovar ou pedir ajustes é decisão sua, no portal. Roteiro:
 1. A entrega cumpre cada critério de aceite? Teste você mesmo o "como testar" da nota de execução.

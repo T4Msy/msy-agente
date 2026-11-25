@@ -9,8 +9,10 @@ usa do seu jeito.
 - **Ajuda pelo papel**: skills para UX/UI, Front-end, Back-end, QA e Gestor, escolhidas pelo papel do membro no projeto.
 - **Ensina quem está começando** (modo mentor) e **protege contra os erros comuns**: segredo no código, tabela sem
   RLS, XSS, permissão só no front, interface sem estados, push forçado na `main`.
-- **Organiza a rotina**: resumo do dia, lembretes e envio de prazos para a agenda pessoal (com a ferramenta de agenda
-  que cada um conectar, ou por arquivo `.ics`).
+- **Organiza a rotina**: resumo do dia, lembretes e envio de prazos e reuniões para a agenda pessoal (com a ferramenta
+  de agenda que cada um conectar, ou por arquivo `.ics`).
+- **Reuniões que começam no que importa**: antes, o resumo de entregas, travas e decisões; depois, a transcrição vira
+  ata no portal e os encaminhamentos viram tarefas com dono e prazo.
 
 ## Instalar
 
@@ -35,7 +37,9 @@ senha **lá** e a sessão fica só no seu computador, em `~/.msy/credenciais.jso
 | `/msy:tarefas` | Suas tarefas priorizadas e a sugestão da próxima |
 | `/msy:comecar [id]` | Briefing da tarefa, dúvidas, plano, branch e início no portal |
 | `/msy:entregar [id]` | Verificação, revisão de segurança, nota de execução e envio para revisão |
-| `/msy:agenda [dias]` | Prazos e eventos para a sua agenda (ou um `.ics`) |
+| `/msy:agenda [dias]` | Prazos, reuniões e eventos para a sua agenda (ou um `.ics`) |
+| `/msy:pre-reuniao` | Antes da reunião: quem entregou o quê, o que travou e o que precisa ser decidido |
+| `/msy:ata [transcrição]` | Depois da reunião: ata no portal, encaminhamentos viram tarefas e prazos vão para a agenda |
 | `/msy:aprender <tema>` | Aula prática do tema, aplicada ao seu projeto |
 | `/msy:revisar` | Revisão de segurança, interface e qualidade da sua branch |
 
@@ -53,6 +57,7 @@ semana na minha agenda".
 ```
 node bin/msy.mjs login [--terminal]   conectar (padrão: confirmação no navegador)
 node bin/msy.mjs status | tarefas | tarefa <id> | agenda [dias] | ics [dias] [arquivo]
+node bin/msy.mjs reunioes [dias] | reuniao [fonte id] | transcricao <arquivo>
 node bin/msy.mjs perfil | doctor | logout
 ```
 

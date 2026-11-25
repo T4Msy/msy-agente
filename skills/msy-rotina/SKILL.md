@@ -1,6 +1,6 @@
 ---
 name: msy-rotina
-description: Organização pessoal do membro com o portal — resumo do dia ou da semana, prazos, eventos e notificações, passar tarefas e eventos para a agenda pessoal (Google Agenda ou outra conectada), lembretes e rotinas recorrentes no próprio Claude Code ou Codex. Use quando o membro pedir para organizar o dia/semana, "o que tenho hoje", lembrar de algo, sincronizar com agenda, criar rotina ou resumo automático.
+description: Organização pessoal do membro com o portal — resumo do dia ou da semana, prazos, reuniões, eventos e notificações, passar tarefas e eventos para a agenda pessoal (Google Agenda ou outra conectada), lembretes e rotinas recorrentes no próprio Claude Code ou Codex. Use quando o membro pedir para organizar o dia/semana, "o que tenho hoje", lembrar de algo, sincronizar com agenda, criar rotina ou resumo automático.
 ---
 
 # Rotina e organização
@@ -16,6 +16,15 @@ Use `agenda` (dias=1 para hoje, 7 para a semana) e `notificacoes`. Entregue em n
 2. Eventos e reuniões com horário (marque os obrigatórios).
 3. O que esperar dos outros (tarefas em revisão, ajustes pedidos).
 4. Uma sugestão de foco ("comece pela X, ela trava a Y").
+
+## Reuniões
+
+`agenda` já traz as reuniões (agendadas, gerais e encontros do grupo). Para o resumo antes de uma reunião e para a ata
+depois, use a skill `msy-reunioes`.
+
+Achar horário para uma reunião: com uma ferramenta de agenda conectada, use a consulta de horários livres dela
+(free/busy) para os participantes e proponha 2–3 opções. Marcar a reunião no portal é feito por quem tem
+"gerenciar reuniões", na aba Reuniões; o agente pode criar o convite na agenda do membro.
 
 ## Passar para a agenda pessoal
 

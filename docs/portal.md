@@ -22,7 +22,11 @@ Projeto Supabase `lldzgkxpoyqauxdcjyaw` · repositório `T4Msy/Portal-Membro-Msy
 | `task_checklist_items`, `project_docs`, `project_history` | briefing |
 | `activities` | atividades da Ordem com prazo (`deadline`, `deadline_time`) |
 | `notifications` | não lidas (`read=false`, `deleted_at is null`) |
-| `events` | próximos eventos |
+| `events` | próximos eventos; os de tipo reunião/call entram como reunião |
+| `scheduled_meetings` (+ `scheduled_meeting_participants`), `meetings` | reuniões agendadas e gerais |
+| `meeting_minutes` | última ata (pendências) |
+| `activity_responses` | atividades respondidas no período (entregas da Ordem) |
+| `meeting_requests` | pedidos de reunião pendentes (só quem gerencia reuniões vê) |
 
 ## O que o agente escreve
 
@@ -33,6 +37,8 @@ Projeto Supabase `lldzgkxpoyqauxdcjyaw` · repositório `T4Msy/Portal-Membro-Msy
 | Nota de execução | `PATCH project_tasks.exec_note` | responsável ou gestor; o gatilho `enforce_task_assignee_columns` impede o responsável de mudar outras colunas |
 | Checklist | `PATCH/POST task_checklist_items` | responsável ou gestor |
 | Histórico | `POST project_history` com `action='agente_*'`, `metadata.via='msy-agente'` | membro do projeto, `actor_id = ele mesmo` |
+| Ata | `POST meeting_minutes` (+ `meeting_minute_viewers`) | só quem tem `gerenciar_reunioes` |
+| Criar tarefa | `POST project_tasks` (+ checklist, histórico, `rpc/notify_project`) | só gestor do projeto (`can_manage_project`) |
 
 Aprovar (`task_approve`) e pedir ajustes (`task_request_changes`) **não** são expostos.
 

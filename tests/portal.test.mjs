@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { startFakeSupabase, MEMBRO, TAREFA, ITEM } from './fake-supabase.mjs';
 import { createClient } from '../lib/supabase.mjs';
-import { createPortal, sortTasks } from '../lib/portal.mjs';
+import { createPortal, sortTasks, todayISO, addDaysISO } from '../lib/portal.mjs';
 import { briefText, tasksText, sessionSummary, agendaText } from '../lib/format.mjs';
 import { readCredentials, writeCredentials } from '../lib/credentials.mjs';
 import { toIcs } from '../lib/ics.mjs';
@@ -106,7 +106,8 @@ test('agenda junta tarefa com prazo, atividade e evento, e vira .ics', async () 
   const ics = toIcs(a);
   assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
   assert.match(ics, /SUMMARY:\[MSY\] Call semanal/);
-  assert.match(ics, /DTSTART;TZID=America\/Sao_Paulo:20261128T200000/);
+  assert.match(ics, new RegExp(`DTSTART;TZID=America/Sao_Paulo:${addDaysISO(todayISO(), 1).replace(/-/g, '')}T200000`));
+  assert.ok(tipos.includes('reuniao'), 'reunião agendada entra na agenda');
   assert.ok(ics.split('\r\n').every((l) => Buffer.byteLength(l) <= 75));
 });
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 — 2026-11-25
+
+Reuniões.
+
+- Resumo pré-reunião (`preparar_reuniao`, `/msy:pre-reuniao`): entregas por pessoa desde a reunião anterior, o que
+  travou, o que precisa ser decidido e encaminhamentos abertos da última ata. Lembrete no início da sessão quando há
+  reunião hoje ou amanhã; receita de rotina automática antes de cada reunião.
+- Transcrição (`ler_transcricao`, `msy transcricao`): .vtt/.srt do Meet/Teams/Zoom, JSON do Whisper e texto livre.
+- Ata no portal (`registrar_ata`, `/msy:ata`), ligada à reunião e aos leitores; encaminhamentos viram tarefas
+  (`criar_tarefa`, só gestor) com aviso ao responsável.
+- Reuniões (agendadas, gerais e calls do grupo) na `agenda` e no `.ics`; `reunioes` no MCP e na CLI.
+- Skill `msy-reunioes`, regra `sec-gravacao-reuniao` (consentimento e LGPD).
+
 ## 0.1.0 — 2026-11-25
 
 Primeira versão.
