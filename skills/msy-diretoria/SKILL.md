@@ -14,8 +14,14 @@ skill `msy-coordenacao` (saúde dos membros, presenças, atividades, Huginn).
 
 Consultar pelo agente: `membros` (quem é quem, cargo, nível), `ranking_mensagens`, `mensalidade` (quem pagou
 e quem está pendente no mês), `comissoes` (`todas=true` para quem administra) e `icm` de qualquer membro.
-Ainda no portal, até o agente ganhar essas ações: aprovar, desativar ou mudar cargo de membro, permissões,
-registrar pagamento de mensalidade e mexer no comissionamento. Avisos sobre qualquer um desses assuntos
+Ações de diretoria pelo agente, sempre mostrando a mudança e com `confirmado=true` depois do sim:
+- `gerir_membro`: aprovar cadastro, desativar, reativar, mudar cargo, promover à diretoria ou voltar a membro.
+- `permissoes`: ver e mudar as permissões individuais (dar/tirar as chaves de permissoes.html).
+- `registrar_mensalidade`: marcar paga (pagamento por fora) ou de volta a pendente, por mês.
+- `salvar_ranking`: gravar o ranking da semana ou do mês com os números do bot.
+- `comissao_acao`: enviar para análise, aprovar, quitar, registrar pagamento a um participante ou cancelar.
+O agente nunca usa essas ações na própria conta (nem a própria mensalidade). Ainda só no portal: criar e editar os
+valores de um cálculo de comissão e excluir um perfil de vez. Avisos sobre qualquer um desses assuntos
 (inclusive cobrança de mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa:
 `revisar_tarefa`, para gestor do projeto. Projetos e reuniões também vão pelo agente: `criar_projeto`,
 `editar_projeto`, `participantes_projeto`, `marcar_reuniao`, `gerenciar_reuniao` e `responder_pedido_reuniao`.

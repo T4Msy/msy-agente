@@ -15,6 +15,7 @@ import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
 import { createEventos, eventsText, eventDetailText, historyText, EVENT_TYPES } from '../lib/eventos.mjs';
 import { fmtDate } from '../lib/format.mjs';
 import { createComunicacao, comunicadosText, jornalText, justificationsText, COMUNICADO_CATEGORIAS } from '../lib/comunicacao.mjs';
+import { createDiretoria, PERMISSOES, ACOES_MEMBRO, ACOES_COMISSAO, mesLabel } from '../lib/diretoria.mjs';
 import { createGestao, projectLabel, PROJ_STATUS, PROJ_TIPO, PRIORIDADES } from '../lib/gestao.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
@@ -58,6 +59,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const coordenacao = createCoordenacao(client, { whatsapp });
   const consultas = createConsultas(client);
   const gestao = createGestao(client);
+  const diretoria = createDiretoria(client);
   return [
     {
       name: 'guia',
@@ -793,6 +795,115 @@ export function buildTools(portal, client, { remote = false } = {}) {
       inputSchema: { type: 'object', properties: { mes: { type: 'string', description: 'AAAA-MM' }, membro: { type: 'string', description: 'Nome do membro.' } } },
       annotations: { title: 'Mensalidade', ...READ },
       run: async (a) => monthlyText(await consultas.monthly(a)),
+    },
+    {
+      name: 'gerir_membro',
+      description: 'Como em membros.html: aprovar cadastro (a pessoa é avisada), desativar, reativar, mudar o cargo (texto, ex.: "Designer Oficial"), promover à diretoria ou voltar a membro comum. Diretoria, ou quem tem aprovar_membros, remover_membros ou editar_membros; promover e rebaixar só a diretoria. Nunca na própria conta. Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          membro: { type: 'string', description: 'Nome do membro (vale pendente e inativo).' },
+          acao: { type: 'string', enum: ACOES_MEMBRO },
+          cargo: { type: 'string', maxLength: 80, description: 'Com acao=cargo.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['membro', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir membro', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: mostre a mudança e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await diretoria.manageMember(a);
+        const what = { aprovar: 'aprovado e avisado', desativar: 'desativado (perde o acesso, os dados ficam)', reativar: 'reativado', cargo: `com cargo "${r.depois.role}"`, promover_diretoria: 'agora na diretoria', voltar_membro: 'de volta a membro comum (avisado)' }[r.acao];
+        return `${r.nome}: ${what}.`;
+      },
+    },
+    {
+      name: 'permissoes',
+      description: 'Permissões individuais (permissoes.html). Sem dar/tirar, mostra as do membro (as próprias, ou de qualquer um para a diretoria). Com dar/tirar, muda: só a diretoria e nunca na própria conta. Só envie confirmado=true depois do sim quando for mudar.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          membro: { type: 'string', description: 'Nome do membro (padrão: você).' },
+          dar: { type: 'array', items: { type: 'string', enum: PERMISSOES } },
+          tirar: { type: 'array', items: { type: 'string', enum: PERMISSOES } },
+          confirmado: { type: 'boolean' },
+        },
+      },
+      annotations: { title: 'Permissões', ...WRITE },
+      run: async (a) => {
+        const muda = (a.dar?.length || 0) + (a.tirar?.length || 0) > 0;
+        if (muda && a.confirmado !== true) return { text: 'Não mudei nada: mostre as permissões que vão mudar e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await diretoria.permissions(a);
+        if (!r.mudou) return `Permissões de ${r.nome}: ${r.permissoes.join(', ') || 'nenhuma individual (vale só o que o nível dá)'}.`;
+        return `Permissões de ${r.nome} atualizadas.${r.deu.length ? ` Ganhou: ${r.deu.join(', ')}.` : ''}${r.tirou.length ? ` Perdeu: ${r.tirou.join(', ')}.` : ''} Agora: ${r.permissoes.join(', ') || 'nenhuma'}.`;
+      },
+    },
+    {
+      name: 'registrar_mensalidade',
+      description: 'Marca a mensalidade de um membro como paga (pagamento por fora, ex.: Pix direto) ou de volta a pendente, num mês (AAAA-MM, padrão o atual). Diretoria ou gerenciar_mensalidade; nunca a própria. Ao marcar pago, o membro é avisado. Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          membro: { type: 'string' },
+          mes: { type: 'string', description: 'AAAA-MM' },
+          status: { type: 'string', enum: ['pago', 'pendente'] },
+          data_pagamento: { type: 'string', description: 'AAAA-MM-DD (padrão hoje)' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['membro', 'confirmado'],
+      },
+      annotations: { title: 'Registrar mensalidade', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não registrei: confirme o membro, o mês e o status e chame de novo com confirmado=true.', isError: true };
+        const r = await diretoria.registerMonthly(a);
+        return `Mensalidade de ${mesLabel(r.mes)} de ${r.nome}: ${r.status}${r.status === 'pago' ? ', e o membro foi avisado' : ''}.`;
+      },
+    },
+    {
+      name: 'salvar_ranking',
+      description: 'Salva no portal o ranking de mensagens do grupo de um período (padrão: semana passada, dom a sáb), com os números contados pelo bot, para aparecer em ranking.html. Diretoria ou gerenciar_ranking. Mostre o ranking (ranking_mensagens) antes e só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          periodo: { type: 'string', enum: ['semana_passada', 'mes_passado', 'semana', 'mes', 'livre'] },
+          de: { type: 'string', description: 'AAAA-MM-DD (periodo=livre)' },
+          ate: { type: 'string', description: 'AAAA-MM-DD (periodo=livre)' },
+          tipo: { type: 'string', enum: ['semanal', 'mensal'] },
+          substituir: { type: 'boolean', description: 'true troca um ranking já salvo do mesmo período.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['confirmado'],
+      },
+      annotations: { title: 'Salvar ranking', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não salvei: mostre o ranking e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await diretoria.saveRanking(a);
+        return `Ranking ${r.tipo} de ${fmtDate(r.de)} a ${fmtDate(r.ate)} ${r.substituiu ? 'substituído' : 'salvo'} com ${r.total} membro(s). Top 3: ${r.top.map((e, i) => `${i + 1}. ${e.name} (${e.messages})`).join(', ')}.`;
+      },
+    },
+    {
+      name: 'comissao_acao',
+      description: 'Move um cálculo de comissão (comissionamento.html): enviar para análise, aprovar, quitar (cliente pagou tudo; data), pagar um participante (membro; tipo execution ou referral; data) ou cancelar (motivo). As funções do portal decidem quem pode e em que estado. Criar e editar valores continua na tela. Use comissoes (com id) antes e só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: idProp('Cálculo de comissão'),
+          acao: { type: 'string', enum: ACOES_COMISSAO },
+          data: { type: 'string', description: 'AAAA-MM-DD (quitar/pagar; padrão hoje)' },
+          membro: { type: 'string', description: 'Participante que recebe (pagar).' },
+          tipo: { type: 'string', enum: ['execution', 'referral'] },
+          motivo: { type: 'string', maxLength: 500 },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Ação de comissão', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: mostre a ação e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await diretoria.commissionAction(a);
+        const what = { enviar_analise: 'enviado para análise', aprovar: 'aprovado', quitar: `quitado em ${fmtDate(r.data)}`, pagar: `pagamento a ${r.quem} registrado em ${fmtDate(r.data)}`, cancelar: 'cancelado' }[r.acao];
+        return `Comissão de "${r.projeto}": ${what}.`;
+      },
     },
     {
       name: 'sugestoes',

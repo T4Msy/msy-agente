@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0 — 2026-11-25
+
+- Ações de diretoria pelo agente, com as permissões do portal:
+  - `gerir_membro`: aprovar cadastro (avisa), desativar, reativar, mudar cargo, promover à diretoria e voltar a membro.
+  - `permissoes`: ver e mudar as permissões individuais.
+  - `registrar_mensalidade`: marcar paga ou pendente por mês (avisa ao marcar paga).
+  - `salvar_ranking`: grava o ranking semanal ou mensal com os números contados pelo bot.
+  - `comissao_acao`: análise, aprovação, quitação, pagamento a participante e cancelamento de um cálculo.
+- O agente nunca muda status, cargo, permissões ou mensalidade da própria conta, mesmo onde o banco deixaria.
+
 ## 0.10.0 — 2026-11-25
 
 - Gestão de projetos pelo agente, como em projetos.html:

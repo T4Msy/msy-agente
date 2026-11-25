@@ -170,9 +170,18 @@ export function startFakeSupabase({ today } = {}) {
         }
         if (fn === 'can_access_supervision') return send(200, !!state.supervision);
         if (fn === 'commission_read') {
+          if (body.p_id) {
+            if (!state.commissionAdmin) return send(403, { code: '42501', message: 'Acesso negado.' });
+            return send(200, { project: { id: body.p_id, version: 3, status: 'approved', input: { project_name: 'Site da padaria', referral_user_id: null } },
+              members: [{ member_key: OUTRO.id, name_snapshot: OUTRO.name, final_cents: 50000 }], payments: [] });
+          }
           if (body.p_own) return send(200, { own: [{ id: 'c1', project_name: 'Site da padaria', status: 'approved', settled_at: null, execution: { final_cents: 50000 }, referral_cents: 10000, payments: [{ amount_cents: 20000 }] }] });
           if (!state.commissionAdmin) return send(403, { code: '42501', message: 'Acesso negado.' });
           return send(200, { projects: [{ id: 'c1', status: 'approved', input: { project_name: 'Site da padaria', client_name: 'Padaria', gross_cents: 300000 } }], payments: [] });
+        }
+        if (fn === 'commission_command') {
+          if (!state.commissionAdmin) return send(400, { code: 'P0001', message: 'Sem permissão ou estado inválido para aprovação.' });
+          return send(200, { ok: true });
         }
         if (fn === 'notify_project') return send(200, (body.p_user_ids || []).length);
         if (fn === 'task_request_review') { t.status = 'em_revisao'; t.revisions_count = (t.revisions_count || 0) + 1; return send(200, null); }
