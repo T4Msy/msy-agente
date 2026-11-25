@@ -21,7 +21,7 @@ mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa: `revi
 saúde do Huginn, quem sumiu e os eventos da próxima semana. Ao responder:
 - Comece pelo que mudou ou preocupa, em 3 linhas. Depois os números.
 - Compare com a semana anterior quando fizer sentido (rode `painel` com `dias=14` e diga a diferença).
-- Nomes de quem sumiu ficam na conversa com a diretoria; nunca vão para grupo.
+- Nomes de quem sumiu ficam na conversa com a diretoria; vão para grupo só se o membro pedir.
 
 ## 2. Relatório semanal
 
