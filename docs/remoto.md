@@ -1,6 +1,7 @@
 # MCP remoto (Claude, ChatGPT, celular)
 
-O mesmo servidor do plugin, publicado na internet (Vercel) com login OAuth. Endereço do conector: `https://<domínio>/mcp`.
+O mesmo servidor do plugin, publicado na internet (Vercel, projeto `msy-agente` do time da Masayoshi) com login OAuth.
+Endereço do conector: **`https://msy-agente.vercel.app/mcp`**. Cada push na `main` publica de novo.
 
 ## Como o login funciona
 

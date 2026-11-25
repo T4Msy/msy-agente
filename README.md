@@ -25,7 +25,7 @@ usa do seu jeito.
 | **Claude Code / Codex (PC)** | Plugin (abaixo): MCP, skills, comandos `/msy:*` e as proteções a cada edição. Sem o plugin, dá para usar só o MCP remoto. |
 | **Qualquer app com MCP remoto** | A mesma URL, com login OAuth. |
 
-URL do MCP remoto: **`https://<domínio do agente>/mcp`** (veja `docs/remoto.md`). Nos apps sem plugin, o agente
+URL do MCP remoto: **`https://msy-agente.vercel.app/mcp`** (detalhes em `docs/remoto.md`). Nos apps sem plugin, o agente
 carrega o contexto da Masayoshi e os guias por papel pela ferramenta `guia`, e os fluxos prontos aparecem como prompts.
 
 ## Instalar
