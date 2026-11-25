@@ -83,10 +83,13 @@ test('criar atividade: só com permissão; uma por membro, notifica cada um e re
   assert.ok(fake.db.agent_audit.some((a) => a.tool === 'criar_atividade'));
 });
 
-test('observação manual da Supervisão vai com origem manual e o membro na evidência', async () => {
+test('observação manual da Supervisão: só coordenação; vai com origem manual e o membro na evidência', async () => {
+  await assert.rejects(as({ supervision: true }).addObservation({ titulo: 'Conversa', texto: 'Combinamos algo.' }), /coordenação/);
+  fake.db.supervision_team = [{ user_id: MEMBRO.id, role: 'coordinator' }];
   const o = await as({ supervision: true }).addObservation({ titulo: 'Conversa com a Bia', texto: 'Combinamos que ela volta nas calls.', membro: 'Bia Lima' });
   const row = fake.db.supervision_observations.find((x) => x.id === o.id);
   assert.equal(row.origin, 'manual'); assert.equal(row.created_by, MEMBRO.id); assert.equal(row.evidence.membro_id, BIA);
+  fake.db.supervision_team = [];
 });
 
 test('sugestões: mais votadas primeiro e filtro por status', async () => {

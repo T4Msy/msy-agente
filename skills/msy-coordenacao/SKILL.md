@@ -56,11 +56,12 @@ Atividade em dupla ou grupo (colaborativa) e anexos se fazem no portal.
 `alertas_huginn` mostra a saúde da Ordem (0 a 100), alertas, casos e lembretes. O resto da Central também vai
 pelo agente, com as mesmas regras da tela (supervisao.html):
 
-- `lembretes_supervisao` e `gerir_lembrete`: criar lembrete com prazo e responsável, concluir, dispensar. Aprovar
-  ou recusar a ação sugerida de um lembrete é da coordenação da Supervisão ou da diretoria.
+- `lembretes_supervisao` e `gerir_lembrete`: criar lembrete com prazo e responsável, concluir, dispensar, aprovar
+  ou recusar a ação sugerida. Mexer em lembrete e observação é da coordenação da Supervisão ou da diretoria;
+  quem só tem acesso de leitura vê, mas não muda.
 - `casos_supervisao` e `gerir_caso` (coordenação ou diretoria): assumir com responsável e prazo, encerrar ou
   dispensar com uma nota de como foi, reabrir, adiar (padrão: amanhã 9h).
-- `gerir_alerta`: reconhecer, resolver ou dispensar um alerta. `arquivar_observacao` arquiva uma observação.
+- `gerir_alerta`: reconhecer, resolver ou dispensar um alerta (basta acesso). `arquivar_observacao` arquiva uma observação.
 
 Caso ou alerta sobre a própria pessoa: o agente não encerra; quem fecha é outra pessoa da coordenação.
 Tudo isso é registro interno: nada vai para o membro. Para falar com ele, `enviar_whatsapp` à parte.

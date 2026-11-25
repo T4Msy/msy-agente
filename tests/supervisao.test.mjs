@@ -33,21 +33,22 @@ test('prazo vira horário de São Paulo', () => {
   assert.throws(() => spInstant('amanhã'), /AAAA-MM-DD/);
 });
 
-test('lembretes: sem acesso recusa; cria com responsável; concluir e aprovar seguem a tela', async () => {
+test('lembretes: sem acesso recusa; só leitura vê mas não mexe; coordenação cria, conclui e aprova', async () => {
   await assert.rejects(as({ acesso: false }).reminders(), /Supervisão/);
-  const s = as();
+  await assert.rejects(as().createReminder({ titulo: 'Cobrar ata' }), /coordenação/);
+  const s = as({ coord: true });
   const r = await s.createReminder({ titulo: 'Cobrar ata', categoria: 'task', prazo: '2026-12-01', responsavel: 'Ana Front' });
   assert.equal(r.responsavel, 'Ana Front');
   const row = fake.db.supervision_reminders.at(-1);
   assert.equal(row.metadata.assigned_to, OUTRO.id); assert.equal(row.origin, 'manual'); assert.equal(row.created_by, MEMBRO.id);
   fake.db.supervision_reminders.push({ id: LEMB, title: 'Mandar aviso', status: 'open', approval_status: 'pending_approval', category: 'event_message', metadata: {} });
-  assert.match(remindersText(await s.reminders()), /esperando aprovação/);
-  await assert.rejects(s.actReminder({ id: LEMB, acao: 'aprovar' }), /coordenação/);
+  assert.match(remindersText(await as().reminders()), /esperando aprovação/);
+  await assert.rejects(as().actReminder({ id: LEMB, acao: 'concluir' }), /coordenação/);
   const ok = await as({ coord: true }).actReminder({ id: LEMB, acao: 'aprovar' });
   assert.equal(ok.lembrete.approval_status, 'approved');
-  await s.actReminder({ id: LEMB, acao: 'concluir' });
+  await as({ coord: true }).actReminder({ id: LEMB, acao: 'concluir' });
   assert.equal(fake.db.supervision_reminders.find((x) => x.id === LEMB).status, 'completed');
-  await assert.rejects(s.actReminder({ id: LEMB, acao: 'dispensar' }), /já está concluído/);
+  await assert.rejects(as({ coord: true }).actReminder({ id: LEMB, acao: 'dispensar' }), /já está concluído/);
 });
 
 test('casos: só coordenação opera; assumir pede responsável e prazo; encerrar pede nota; caso sobre si não', async () => {
@@ -69,7 +70,7 @@ test('casos: só coordenação opera; assumir pede responsável e prazo; encerra
   assert.equal(z.ate, '2026-12-02T12:00:00.000Z');
 });
 
-test('alertas e observações: acesso basta; alerta sobre si não se resolve', async () => {
+test('alertas: acesso basta, alerta sobre si não se resolve; observação só coordenação arquiva', async () => {
   const s = as();
   await assert.rejects(s.actAlert({ id: 'e2000000-0000-4000-8000-000000000001', acao: 'resolver' }), /Não encontrei/);
   fake.db.supervision_alerts.push({ id: 'e2000000-0000-4000-8000-000000000002', title: 'Queda', status: 'open', member_id: BIA },
@@ -79,7 +80,8 @@ test('alertas e observações: acesso basta; alerta sobre si não se resolve', a
   await assert.rejects(s.actAlert({ id: 'e2000000-0000-4000-8000-000000000003', acao: 'dispensar' }), /sobre você/);
   await s.actAlert({ id: 'e2000000-0000-4000-8000-000000000003', acao: 'reconhecer' });
   fake.db.supervision_observations.push({ id: 'e3000000-0000-4000-8000-000000000001', title: 'Nota', status: 'active' });
-  const o = await s.archiveObservation({ id: 'e3000000-0000-4000-8000-000000000001' });
+  await assert.rejects(s.archiveObservation({ id: 'e3000000-0000-4000-8000-000000000001' }), /coordenação/);
+  const o = await as({ coord: true }).archiveObservation({ id: 'e3000000-0000-4000-8000-000000000001' });
   assert.equal(o.status, 'archived');
-  await assert.rejects(s.archiveObservation({ id: 'e3000000-0000-4000-8000-000000000001' }), /já está arquivada/);
+  await assert.rejects(as({ coord: true }).archiveObservation({ id: 'e3000000-0000-4000-8000-000000000001' }), /já está arquivada/);
 });

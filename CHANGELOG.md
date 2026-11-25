@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.1 — 2026-11-25
+
+- Supervisão segue a correção de segurança aplicada no banco: criar e mexer em lembretes e observações
+  (inclusive `registrar_observacao`) passa a ser só da coordenação da Supervisão ou da diretoria. Alertas seguem
+  com quem tem acesso.
+
 ## 0.13.0 — 2026-11-25
 
 - Central da Supervisão pelo agente, com as regras da tela:

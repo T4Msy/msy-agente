@@ -813,7 +813,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
     },
     {
       name: 'registrar_observacao',
-      description: 'Registra uma observação manual na Supervisão (Huginn), opcionalmente ligada a um membro. É registro interno da coordenação: nada vai para o membro nem para grupo. Só para quem tem acesso à Supervisão.',
+      description: 'Registra uma observação manual na Supervisão (Huginn), opcionalmente ligada a um membro. É registro interno da coordenação: nada vai para o membro nem para grupo. Só coordenação da Supervisão ou diretoria.',
       inputSchema: {
         type: 'object',
         properties: { titulo: { type: 'string', maxLength: 160 }, texto: { type: 'string', maxLength: 4000 }, membro: { type: 'string', description: 'Nome ou id do membro (opcional).' } },
@@ -834,7 +834,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
     },
     {
       name: 'gerir_lembrete',
-      description: 'Cria um lembrete na Supervisão (com prazo e responsável opcionais) ou age num existente: concluir, dispensar e, para a coordenação da Supervisão ou a diretoria, aprovar ou recusar a ação sugerida. Registro interno: nada vai para o membro. Prazo em horário de São Paulo. Chame com confirmado=true depois do sim.',
+      description: 'Cria um lembrete na Supervisão (com prazo e responsável opcionais) ou age num existente: concluir, dispensar, aprovar ou recusar a ação sugerida. Só coordenação da Supervisão ou diretoria. Registro interno: nada vai para o membro. Prazo em horário de São Paulo. Chame com confirmado=true depois do sim.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -904,7 +904,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
     },
     {
       name: 'arquivar_observacao',
-      description: 'Arquiva uma observação da Supervisão, como o botão do portal. Só para quem tem acesso à Supervisão. Chame com confirmado=true depois do sim.',
+      description: 'Arquiva uma observação da Supervisão, como o botão do portal. Só coordenação da Supervisão ou diretoria. Chame com confirmado=true depois do sim.',
       inputSchema: { type: 'object', properties: { id: idProp('Observação'), confirmado: { type: 'boolean' } }, required: ['id', 'confirmado'] },
       annotations: { title: 'Arquivar observação', ...WRITE },
       run: async (a) => {
