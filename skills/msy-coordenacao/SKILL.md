@@ -7,7 +7,7 @@ description: Coordenação da Ordem — acompanhar quem está sumindo (presença
 
 Objetivo: ninguém some sem alguém perceber, e a cobrança acontece cedo, no privado e com respeito.
 Ferramentas do `msy-portal`: `saude_membros`, `presencas`, `atividades_equipe`, `alertas_huginn`,
-`registrar_observacao`, `criar_atividade`, e para falar com a pessoa `enviar_whatsapp` (privado, `membro`).
+`registrar_observacao`, `criar_atividade`, a Central da Supervisão (seção 5), e para falar com a pessoa `enviar_whatsapp` (privado, `membro`).
 Visão da semana para a diretoria: skill `msy-diretoria`.
 
 ## Como agir
@@ -53,5 +53,14 @@ Atividade em dupla ou grupo (colaborativa) e anexos se fazem no portal.
 
 ## 5. Huginn
 
-`alertas_huginn` mostra a saúde da Ordem (0 a 100), alertas, casos e lembretes. Resolver caso, aprovar lembrete
-e arquivar alerta é no portal (supervisao.html). O agente lê, resume e ajuda a preparar a conversa.
+`alertas_huginn` mostra a saúde da Ordem (0 a 100), alertas, casos e lembretes. O resto da Central também vai
+pelo agente, com as mesmas regras da tela (supervisao.html):
+
+- `lembretes_supervisao` e `gerir_lembrete`: criar lembrete com prazo e responsável, concluir, dispensar. Aprovar
+  ou recusar a ação sugerida de um lembrete é da coordenação da Supervisão ou da diretoria.
+- `casos_supervisao` e `gerir_caso` (coordenação ou diretoria): assumir com responsável e prazo, encerrar ou
+  dispensar com uma nota de como foi, reabrir, adiar (padrão: amanhã 9h).
+- `gerir_alerta`: reconhecer, resolver ou dispensar um alerta. `arquivar_observacao` arquiva uma observação.
+
+Caso ou alerta sobre a própria pessoa: o agente não encerra; quem fecha é outra pessoa da coordenação.
+Tudo isso é registro interno: nada vai para o membro. Para falar com ele, `enviar_whatsapp` à parte.

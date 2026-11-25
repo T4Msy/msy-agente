@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0 — 2026-11-25
+
+- Central da Supervisão pelo agente, com as regras da tela:
+  - `lembretes_supervisao` e `gerir_lembrete`: criar (prazo e responsável), concluir, dispensar; aprovar ou recusar
+    a ação só para a coordenação da Supervisão ou a diretoria.
+  - `casos_supervisao` e `gerir_caso`: assumir com responsável e prazo, encerrar ou dispensar com nota, reabrir, adiar.
+  - `gerir_alerta` (reconhecer, resolver, dispensar) e `arquivar_observacao`.
+  - O agente não encerra caso nem alerta sobre a própria pessoa.
+- No banco: sugestões só mudam de status, nota ou texto pela diretoria ou por quem cuida delas (voto segue livre).
+
 ## 0.12.0 — 2026-11-25
 
 - O resto do portal pelo agente:

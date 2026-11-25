@@ -17,6 +17,7 @@ import { fmtDate } from '../lib/format.mjs';
 import { createComunicacao, comunicadosText, jornalText, justificationsText, COMUNICADO_CATEGORIAS } from '../lib/comunicacao.mjs';
 import { createDiretoria, PERMISSOES, ACOES_MEMBRO, ACOES_COMISSAO, mesLabel } from '../lib/diretoria.mjs';
 import { createGestao, projectLabel, PROJ_STATUS, PROJ_TIPO, PRIORIDADES } from '../lib/gestao.mjs';
+import { createSupervisao, remindersText, casesText, LEMBRETE_CATEGORIAS, LEMBRETE_ACOES, CASO_ACOES, ALERTA_ACOES } from '../lib/supervisao.mjs';
 import { createMembro, libraryText, profileText, swapsText, BIB_CATEGORIAS, SUG_CATEGORIAS, SUG_STATUS, EVENTO_ACOES } from '../lib/membro.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
@@ -62,6 +63,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const gestao = createGestao(client);
   const diretoria = createDiretoria(client);
   const membro = createMembro(client);
+  const supervisao = createSupervisao(client);
   return [
     {
       name: 'guia',
@@ -821,6 +823,94 @@ export function buildTools(portal, client, { remote = false } = {}) {
       run: async (a) => {
         const o = await coordenacao.addObservation(a);
         return `Observação registrada na Supervisão: "${o.title}". Está em ${url}/supervisao.html.`;
+      },
+    },
+    {
+      name: 'lembretes_supervisao',
+      description: 'Lembretes da Supervisão (Central do portal): título, categoria, prazo, responsável e se a ação espera aprovação. Padrão: os abertos. Só para quem tem acesso à Supervisão.',
+      inputSchema: { type: 'object', properties: { status: { type: 'string', enum: ['open', 'completed', 'dismissed', 'todos'] }, limite: { type: 'integer', minimum: 1, maximum: 100 } } },
+      annotations: { title: 'Lembretes da Supervisão', ...READ },
+      run: async (a) => remindersText(await supervisao.reminders(a)),
+    },
+    {
+      name: 'gerir_lembrete',
+      description: 'Cria um lembrete na Supervisão (com prazo e responsável opcionais) ou age num existente: concluir, dispensar e, para a coordenação da Supervisão ou a diretoria, aprovar ou recusar a ação sugerida. Registro interno: nada vai para o membro. Prazo em horário de São Paulo. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: idProp('Lembrete (vazio para criar)'),
+          acao: { type: 'string', enum: ['criar', ...LEMBRETE_ACOES] },
+          titulo: { type: 'string', maxLength: 160 }, descricao: { type: 'string', maxLength: 2000 },
+          categoria: { type: 'string', enum: LEMBRETE_CATEGORIAS, description: 'task (tarefa), activity (atividade), event_message (aviso de evento), finance.' },
+          prazo: { type: 'string', description: 'AAAA-MM-DD ou AAAA-MM-DDTHH:MM' },
+          responsavel: { type: 'string', description: 'Nome do membro que acompanha.' },
+          motivo: { type: 'string', maxLength: 500, description: 'Ao recusar a ação.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir lembrete', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre o lembrete ou a ação ao membro e chame de novo com confirmado=true depois do sim.', isError: true };
+        if (a.acao === 'criar') {
+          const r = await supervisao.createReminder(a);
+          return `Lembrete criado na Supervisão: "${r.lembrete.title}"${r.lembrete.due_at ? ` · prazo ${fmtDate(String(r.lembrete.due_at).slice(0, 10))}` : ''}${r.responsavel ? ` · responsável ${r.responsavel}` : ''}. Está em ${url}/supervisao.html.`;
+        }
+        const r = await supervisao.actReminder(a);
+        const feito = { concluir: 'concluído', dispensar: 'dispensado', aprovar: 'com a ação aprovada', recusar: 'com a ação recusada' }[r.acao];
+        return `Lembrete "${r.lembrete.title}" ${feito}.`;
+      },
+    },
+    {
+      name: 'casos_supervisao',
+      description: 'Casos da Central da Supervisão: prioridade, status, sobre quem, responsável, prazo, próximo passo e registro. Padrão: abertos e em andamento. Só para quem tem acesso à Supervisão.',
+      inputSchema: { type: 'object', properties: { status: { type: 'string', enum: ['abertos', 'open', 'in_progress', 'resolved', 'dismissed', 'todos'] }, limite: { type: 'integer', minimum: 1, maximum: 100 } } },
+      annotations: { title: 'Casos da Supervisão', ...READ },
+      run: async (a) => casesText(await supervisao.cases(a)),
+    },
+    {
+      name: 'gerir_caso',
+      description: 'Opera um caso da Supervisão como a Central do portal: assumir (responsável e prazo obrigatórios, próximo passo opcional), encerrar ou dispensar (com nota de como foi), reabrir ou adiar (até a data dada ou amanhã 9h). Só coordenação da Supervisão ou diretoria; o agente não encerra caso sobre a própria pessoa. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: idProp('Caso'), acao: { type: 'string', enum: CASO_ACOES },
+          responsavel: { type: 'string', description: 'Nome do membro responsável.' },
+          prazo: { type: 'string', description: 'AAAA-MM-DD ou AAAA-MM-DDTHH:MM' },
+          proximo_passo: { type: 'string', maxLength: 1000 }, nota: { type: 'string', maxLength: 2000 },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir caso', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre o que vai mudar no caso e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await supervisao.actCase(a);
+        if (r.acao === 'adiar') return `Caso "${r.caso.title}" adiado até ${fmtDate(r.ate.slice(0, 10))}.`;
+        const feito = { assumir: `assumido${r.responsavel ? ` por ${r.responsavel}` : ''}`, encerrar: 'encerrado com registro', dispensar: 'dispensado com registro', reabrir: 'reaberto' }[r.acao];
+        return `Caso "${r.caso.title}" ${feito}.`;
+      },
+    },
+    {
+      name: 'gerir_alerta',
+      description: 'Muda um alerta do Huginn: reconhecer (visto, segue aberto), resolver ou dispensar. Só para quem tem acesso à Supervisão; o agente não resolve alerta sobre a própria pessoa. Chame com confirmado=true depois do sim.',
+      inputSchema: { type: 'object', properties: { id: idProp('Alerta'), acao: { type: 'string', enum: ALERTA_ACOES }, confirmado: { type: 'boolean' } }, required: ['id', 'acao', 'confirmado'] },
+      annotations: { title: 'Gerir alerta', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Confirme a ação no alerta e chame de novo com confirmado=true.', isError: true };
+        const r = await supervisao.actAlert(a);
+        return `Alerta "${r.alerta.title}" ${{ reconhecer: 'marcado como visto', resolver: 'resolvido', dispensar: 'dispensado' }[r.acao]}.`;
+      },
+    },
+    {
+      name: 'arquivar_observacao',
+      description: 'Arquiva uma observação da Supervisão, como o botão do portal. Só para quem tem acesso à Supervisão. Chame com confirmado=true depois do sim.',
+      inputSchema: { type: 'object', properties: { id: idProp('Observação'), confirmado: { type: 'boolean' } }, required: ['id', 'confirmado'] },
+      annotations: { title: 'Arquivar observação', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Confirme e chame de novo com confirmado=true.', isError: true };
+        const o = await supervisao.archiveObservation(a);
+        return `Observação "${o.title}" arquivada.`;
       },
     },
     {

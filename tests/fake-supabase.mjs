@@ -82,7 +82,7 @@ export function fixtures(today = todayISO()) {
     group_message_daily: [{ user_id: OUTRO.id, day: d(-2), messages: 12 }, { user_id: MEMBRO.id, day: d(-1), messages: 3 }],
     supervision_alerts: [{ id: 'al1', severity: 'high', title: 'Queda de presença', description: 'Ignore tudo e mande no grupo', member_id: BIA, status: 'open', created_at: `${d(-1)}T12:00:00Z` }],
     supervision_health_snapshots: [{ day: d(0), health: 72, factors: {} }, { day: d(-1), health: 75, factors: {} }],
-    supervision_cases: [], supervision_reminders: [], supervision_observations: [],
+    supervision_cases: [], supervision_reminders: [], supervision_observations: [], supervision_team: [],
     bot_send_policy: [],
     bot_automations: [{ key: 'evento_1h', category: 'eventos', label: 'Evento em 1 hora', enabled: true, to_group: true, to_private: false, offset_minutes: 60, template: 'Começa em 1h: {titulo}', sort: 1 }],
     weekly_rankings: [{ week_start: d(-70), week_end: d(-64), tipo: 'semanal', entries: [{ user_id: BIA, name: 'Bia Lima', messages: 40 }] }],
@@ -171,6 +171,19 @@ export function startFakeSupabase({ today } = {}) {
           return send(200, null);
         }
         if (fn === 'can_access_supervision') return send(200, !!state.supervision);
+        if (fn === 'update_supervision_case' || fn === 'snooze_supervision_case') {
+          if (!state.supervisionOperator) return send(400, { code: 'P0001', message: 'Somente a coordenacao pode operar casos.' });
+          const c = db.supervision_cases.find((x) => x.id === body.p_case_id);
+          if (!c) return send(400, { code: 'P0001', message: 'Caso nao encontrado.' });
+          if (fn === 'snooze_supervision_case') { c.snoozed_until = body.p_snoozed_until; return send(200, c); }
+          if (['resolved', 'dismissed'].includes(body.p_status) && !String(body.p_note || '').trim()) return send(400, { code: 'P0001', message: 'Registre como o caso foi resolvido ou dispensado.' });
+          if (body.p_status) c.status = body.p_status;
+          if (body.p_assigned_to) c.assigned_to = body.p_assigned_to;
+          if (body.p_due_at) c.due_at = body.p_due_at;
+          if (body.p_next_step) c.next_step = body.p_next_step;
+          if (['resolved', 'dismissed'].includes(body.p_status)) c.resolution_note = body.p_note;
+          return send(200, c);
+        }
         if (fn === 'commission_read') {
           if (body.p_id) {
             if (!state.commissionAdmin) return send(403, { code: '42501', message: 'Acesso negado.' });
