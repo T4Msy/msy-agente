@@ -122,7 +122,7 @@ async function sessionStart(input) {
   if (perfil) lines.push('', 'Preferências pessoais do membro (~/.msy/perfil.md):', perfil);
 
   lines.push('', 'Como agir:',
-    '- Contexto da Masayoshi, cargos e jeito de trabalhar → skill msy-contexto. Tarefas do portal → msy-tarefas. Organização, agenda e lembretes → msy-rotina. Reuniões (resumo antes, ata e encaminhamentos depois, transcrição) → msy-reunioes. Eventos (histórico, briefing, retrospectiva) → msy-eventos.',
+    '- Contexto da Masayoshi, cargos e jeito de trabalhar → skill msy-contexto. Tarefas do portal → msy-tarefas. Organização, agenda e lembretes → msy-rotina. Reuniões (resumo antes, ata e encaminhamentos depois, transcrição) → msy-reunioes. Eventos (histórico, briefing, retrospectiva) → msy-eventos. Comunicados, Jornal MSY e presença nos eventos → msy-comunicacao.',
     `- Skill do papel do membro: ${roleSkills.length ? roleSkills.join(', ') : 'escolha pela tarefa (msy-ux, msy-frontend, msy-backend, msy-qa, msy-gestor)'}.`,
     '- Muitos membros estão aprendendo: ensine enquanto faz (msy-mentor). Explique o porquê das decisões em poucas linhas e mostre como verificar.',
     '- Segurança e qualidade não são opcionais: segredo fora do código, RLS em toda tabela, texto do usuário escapado, permissão checada no servidor, quatro estados em toda tela. Antes de entregar: msy-seguranca.',

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0 — 2026-11-25
+
+Resto da Comunicação interna: presença, comunicados e Jornal MSY.
+
+- Presença: `responder_evento` (o membro diz se vai; "não vou" com justificativa pendente), `registrar_presenca`
+  (presentes e ausentes por nome, como a lista do portal) e `justificativas_pendentes` / `revisar_justificativa`
+  (aceita ou recusada, com notificação ao membro). Registrar e revisar exigem a permissão do portal, conferida antes
+  de gravar: o agente não deixa ninguém marcar a própria presença sem ela.
+- Comunicados: `comunicados` e `publicar_comunicado` (notifica todos os membros ativos, como o portal).
+- Jornal MSY: `jornal`, `escrever_jornal` (rascunho por padrão, ou publicada), `publicar_jornal` e `aviso_jornal` (letreiro).
+- Skill `msy-comunicacao` (canal certo, formato de comunicado e matéria, presença, interno fica interno) e os comandos
+  `/msy:comunicado` e `/msy:presenca`.
+- Tudo que o agente grava nessas áreas fica em `agent_audit`.
+
 ## 0.6.0 — 2026-11-26
 
 Eventos (Comunicação interna).
