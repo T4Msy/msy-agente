@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 — 2026-11-26
+
+Eventos (Comunicação interna).
+
+- Ferramentas `eventos`, `evento`, `historico_eventos`, `criar_evento`, `editar_evento` e `relatorio_evento`: calendário,
+  ficha com presença real (confirmou x foi), histórico de eventos parecidos, criar e editar com a conta do membro, e
+  briefing e retrospectiva salvos no portal (`event_reports`) para o próximo evento partir do que já se aprendeu.
+- Skill `msy-eventos` (histórico, briefing com donos e checklist D-14 a D+1, aviso pelo Corvus, retrospectiva) e os
+  comandos `/msy:briefing-evento` e `/msy:retro-evento`.
+- O que o agente cria ou edita em eventos fica registrado em `agent_audit`.
+
 ## 0.5.0 — 2026-11-25
 
 Skills pelo MCP (extensão `io.modelcontextprotocol/skills`, lançada em beta no Claude e no Claude Code em 24/11/2026).
