@@ -1,0 +1,24 @@
+{
+  "name": "masayoshi",
+  "owner": {
+    "name": "Masayoshi"
+  },
+  "description": "Plugins da Masayoshi para agentes de código.",
+  "plugins": [
+    {
+      "name": "msy",
+      "source": ".",
+      "description": "Agente MSY: conecta o Claude Code/Codex ao Portal de Membro da Masayoshi com a conta do membro (tarefas, agenda, projetos), traz o contexto da Masayoshi e skills por papel (UX/UI, front, back, QA, gestor), ensina quem está começando e protege contra erros de segurança e de interface.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Masayoshi"
+      },
+      "keywords": [
+        "masayoshi",
+        "portal",
+        "tarefas"
+      ],
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "msy",
+  "version": "0.1.0",
+  "description": "Agente MSY: conecta o Claude Code/Codex ao Portal de Membro da Masayoshi com a conta do membro (tarefas, agenda, projetos), traz o contexto da Masayoshi e skills por papel (UX/UI, front, back, QA, gestor), ensina quem está começando e protege contra erros de segurança e de interface.",
+  "author": {
+    "name": "Masayoshi"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "masayoshi",
+    "msy",
+    "portal",
+    "tarefas",
+    "supabase",
+    "mentor"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Agente MSY",
+    "shortDescription": "Portal MSY, contexto da Masayoshi e mentor de código no seu agente",
+    "longDescription": "Conecta ao Portal de Membro com a sua conta: tarefas, prazos, agenda e projetos. Traz o contexto da Masayoshi, skills pelo seu papel no projeto (UX/UI, Front-end, Back-end, QA, Gestor), um modo mentor para quem está aprendendo e checagens de segurança e de interface a cada edição.",
+    "developerName": "Masayoshi",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Quais são minhas tarefas no portal?",
+      "Me dá o resumo do meu dia.",
+      "Começa a próxima tarefa comigo."
+    ]
+  },
+  "mcpServers": {
+    "msy-portal": {
+      "command": "node",
+      "args": [
+        "./mcp/server.mjs"
+      ],
+      "cwd": "./",
+      "env_vars": [
+        "MSY_HOME",
+        "MSY_SUPABASE_URL",
+        "MSY_SUPABASE_ANON_KEY",
+        "MSY_PORTAL_URL",
+        "MSY_TIMEOUT_MS"
+      ]
+    }
+  }
+}

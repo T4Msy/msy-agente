@@ -1,0 +1,17 @@
+{
+  "description": "Agente MSY: lembra o membro do que importa (tarefas, perfil, papel), injeta só as regras da situação, checa cada edição e protege o git.",
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "startup|resume|clear|compact", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/msy-hook.mjs\" session-start", "timeout": 10 } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/msy-hook.mjs\" prompt", "timeout": 5 } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Bash|PowerShell|Shell|shell|exec_command", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/msy-hook.mjs\" pre-shell", "timeout": 15 } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write|MultiEdit|apply_patch", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/msy-hook.mjs\" post-edit", "timeout": 10 } ] }
+    ]
+  }
+}

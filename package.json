@@ -1,0 +1,17 @@
+{
+  "name": "msy-agente",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agente MSY: plugin para Claude Code e Codex conectado ao Portal de Membro da Masayoshi.",
+  "type": "module",
+  "bin": {
+    "msy": "bin/msy.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "msy": "node bin/msy.mjs"
+  }
+}
