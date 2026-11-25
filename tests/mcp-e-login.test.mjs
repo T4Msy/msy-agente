@@ -91,7 +91,7 @@ test('MCP: handshake, ferramentas e confirmação obrigatória nas escritas', as
     s.notify('notifications/initialized');
     const list = await s.call('tools/list');
     const names = list.result.tools.map((t) => t.name);
-    assert.deepEqual(names.sort(), ['guia', 'agenda', 'checklist', 'criar_tarefa', 'enviar_revisao', 'fila_revisao', 'iniciar_tarefa', 'ler_transcricao', 'minhas_tarefas', 'nota_execucao', 'notificacoes', 'preparar_reuniao', 'projeto', 'quem_sou', 'registrar_ata', 'reunioes', 'tarefa', 'whatsapp_grupos', 'enviar_whatsapp', 'eventos', 'evento', 'historico_eventos', 'criar_evento', 'editar_evento', 'relatorio_evento'].sort());
+    assert.deepEqual(names.sort(), ['guia', 'agenda', 'checklist', 'criar_tarefa', 'enviar_revisao', 'fila_revisao', 'iniciar_tarefa', 'ler_transcricao', 'minhas_tarefas', 'nota_execucao', 'notificacoes', 'preparar_reuniao', 'projeto', 'quem_sou', 'registrar_ata', 'reunioes', 'tarefa', 'whatsapp_grupos', 'enviar_whatsapp', 'eventos', 'evento', 'historico_eventos', 'criar_evento', 'editar_evento', 'relatorio_evento', 'responder_evento', 'registrar_presenca', 'justificativas_pendentes', 'revisar_justificativa', 'comunicados', 'publicar_comunicado', 'jornal', 'escrever_jornal', 'publicar_jornal', 'aviso_jornal'].sort());
     assert.ok(!names.some((n) => /aprova|ajuste/.test(n)), 'aprovar não pode existir');
     for (const t of list.result.tools) assert.equal(t.inputSchema.type, 'object');
 

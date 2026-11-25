@@ -14,6 +14,7 @@ import { parseTranscript, transcriptText, transcriptStats } from '../lib/transcr
 import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
 import { createEventos, eventsText, eventDetailText, historyText, EVENT_TYPES } from '../lib/eventos.mjs';
 import { fmtDate } from '../lib/format.mjs';
+import { createComunicacao, comunicadosText, jornalText, justificationsText, COMUNICADO_CATEGORIAS } from '../lib/comunicacao.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
 import { SKILLS_EXTENSION, skillsList, skillsGet, isSkillUri, readSkillResource, readSkillDirectory, skillResourcesForList } from '../lib/skills-mcp.mjs';
 
@@ -23,7 +24,7 @@ const LOGIN_CMD = `node "${path.join(ROOT, 'bin', 'msy.mjs')}" login`;
 
 const BASE_INSTRUCTIONS = [
   'Agente MSY: conexão com o Portal de Membro da Masayoshi (portalmsy.site), com a conta do membro que está usando o agente. Fale em português do Brasil, direto e sem jargão.',
-  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), enviar avisos no WhatsApp pelo bot Corvus, e para',
+  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), responder e registrar presença, publicar comunicados e escrever no Jornal MSY, enviar avisos no WhatsApp pelo bot Corvus, e para',
   'iniciar uma tarefa, atualizar o checklist e a nota de execução e mandar para revisão. As regras do portal valem:',
   'o agente só vê e muda o que o membro pode ver e mudar. Aprovar tarefa é sempre decisão humana do gestor, no portal.',
   DATA_NOTICE,
@@ -31,7 +32,7 @@ const BASE_INSTRUCTIONS = [
   'Datas e horários do portal são de São Paulo; as ferramentas dizem "agora" nesse fuso.',
 ];
 const INSTRUCTIONS = [...BASE_INSTRUCTIONS, `Se uma ferramenta disser que não está conectado, rode no terminal: ${LOGIN_CMD} (abre o portal para o membro confirmar).`].join(' ');
-const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md, skill://msy-eventos/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
+const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md, skill://msy-eventos/SKILL.md, skill://msy-comunicacao/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
 
 const idProp = (what) => ({ type: 'string', description: `${what} (UUID, como aparece nas listas)` });
 const READ = { readOnlyHint: true, openWorldHint: true };
@@ -50,6 +51,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const reunioes = createReunioes(client);
   const whatsapp = createWhatsapp(client);
   const eventos = createEventos(client);
+  const comunicacao = createComunicacao(client);
   return [
     {
       name: 'guia',
@@ -307,6 +309,157 @@ export function buildTools(portal, client, { remote = false } = {}) {
         const { event_id: id, ...rest } = a;
         const r = await eventos.saveReport(id, rest);
         return `Relatório de "${r.evento.title}" salvo no portal (${r.campos.join(', ')}).`;
+      },
+    },
+    {
+      name: 'responder_evento',
+      description: 'Responde, pelo membro, se ele vai ou não a um evento (igual ao botão do portal). "nao_vou" pede a justificativa, que fica pendente para a diretoria analisar. Não marca presença: isso é registrar_presenca, de quem cuida dos eventos.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          event_id: idProp('Evento'),
+          resposta: { type: 'string', enum: ['vou', 'nao_vou'] },
+          justificativa: { type: 'string', maxLength: 1000, description: 'Obrigatória em nao_vou.' },
+        },
+        required: ['event_id', 'resposta'],
+      },
+      annotations: { title: 'Responder evento', ...WRITE },
+      run: async (a) => {
+        const r = await comunicacao.respond(a.event_id, a);
+        return r.resposta === 'vou'
+          ? `Presença confirmada em "${r.evento.title}" (${fmtDate(r.evento.event_date, r.evento.event_time)}).`
+          : `Respondido que não vai a "${r.evento.title}". A justificativa ficou pendente de análise no portal.`;
+      },
+    },
+    {
+      name: 'registrar_presenca',
+      description: 'Marca quem esteve presente e quem faltou num evento (no dia ou depois), como a lista de presença do portal. Só para a diretoria e quem tem permissão de registrar presenças. Aceita nomes (como no portal) ou ids; nome ambíguo para tudo e lista as opções. Quem não está nas listas fica como estava.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          event_id: idProp('Evento'),
+          presentes: { type: 'array', items: { type: 'string' }, maxItems: 100 },
+          ausentes: { type: 'array', items: { type: 'string' }, maxItems: 100 },
+        },
+        required: ['event_id'],
+      },
+      annotations: { title: 'Registrar presença', ...WRITE, idempotentHint: true },
+      run: async (a) => {
+        const r = await comunicacao.recordAttendance(a.event_id, a);
+        const p = r.feitos.filter((f) => f.presenca === 'presente').map((f) => f.nome);
+        const au = r.feitos.filter((f) => f.presenca === 'ausente').map((f) => f.nome);
+        return [`Presença registrada em "${r.evento.title}" (${fmtDate(r.evento.event_date, r.evento.event_time)}):`,
+          p.length ? `- Presentes (${p.length}): ${p.join(', ')}` : null, au.length ? `- Ausentes (${au.length}): ${au.join(', ')}` : null].filter(Boolean).join('\n');
+      },
+    },
+    {
+      name: 'justificativas_pendentes',
+      description: 'Justificativas de "não vou" esperando análise, com evento e motivo. Só para a diretoria e quem revisa justificativas de eventos.',
+      inputSchema: { type: 'object', properties: { dias: { type: 'integer', minimum: 1, maximum: 365, description: 'Eventos dos últimos N dias em diante (padrão 60).' } } },
+      annotations: { title: 'Justificativas pendentes', ...READ },
+      run: async (a) => justificationsText(await comunicacao.pendingJustifications(a)),
+    },
+    {
+      name: 'revisar_justificativa',
+      description: 'Aceita ou recusa a justificativa de um membro num evento (como no portal) e avisa o membro por notificação. Recusada conta como falta. Só para a diretoria e quem revisa justificativas.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          event_id: idProp('Evento'),
+          membro: { type: 'string', description: 'Nome ou id do membro.' },
+          decisao: { type: 'string', enum: ['aceita', 'recusada'] },
+          nota: { type: 'string', maxLength: 500 },
+        },
+        required: ['event_id', 'membro', 'decisao'],
+      },
+      annotations: { title: 'Revisar justificativa', ...WRITE, idempotentHint: true },
+      run: async (a) => {
+        const r = await comunicacao.reviewJustification(a.event_id, a);
+        return `Justificativa de ${r.membro} em "${r.evento.title}" ${r.decisao}. O membro foi notificado no portal.`;
+      },
+    },
+    {
+      name: 'comunicados',
+      description: 'Comunicados oficiais do portal (fixados primeiro), com categoria, autor e texto. Use para saber o que já foi comunicado antes de escrever um novo.',
+      inputSchema: { type: 'object', properties: { categoria: { type: 'string', enum: COMUNICADO_CATEGORIAS }, limite: { type: 'integer', minimum: 1, maximum: 30 } } },
+      annotations: { title: 'Comunicados', ...READ },
+      run: async (a) => comunicadosText(await comunicacao.listComunicados(a)),
+    },
+    {
+      name: 'publicar_comunicado',
+      description: 'Publica um comunicado oficial no portal e notifica todos os membros ativos (como o botão Publicar do portal). Só para a diretoria e quem tem permissão de publicar comunicados. É comunicação interna da Ordem: nunca use para redes sociais. Formato na skill msy-comunicacao.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          titulo: { type: 'string', maxLength: 150 },
+          texto: { type: 'string', maxLength: 8000 },
+          categoria: { type: 'string', enum: COMUNICADO_CATEGORIAS, description: 'Padrão Geral.' },
+          fixado: { type: 'boolean', description: 'Fica no topo da lista.' },
+        },
+        required: ['titulo', 'texto'],
+      },
+      annotations: { title: 'Publicar comunicado', ...WRITE },
+      run: async (a) => {
+        const c = await comunicacao.publishComunicado(a);
+        return `Comunicado publicado no portal: "${c.title}" (${c.category}${c.pinned ? ', fixado' : ''}) · comunicado ${c.id}. Os membros ativos foram notificados. Está em ${url}/comunicados.html.`;
+      },
+    },
+    {
+      name: 'jornal',
+      description: 'Jornal MSY: matérias (rascunhos, publicadas, arquivadas; quem não gerencia o Jornal só vê as publicadas) e os avisos ativos do letreiro.',
+      inputSchema: { type: 'object', properties: { status: { type: 'string', enum: ['draft', 'published', 'archived'] }, limite: { type: 'integer', minimum: 1, maximum: 30 } } },
+      annotations: { title: 'Jornal MSY', ...READ },
+      run: async (a) => jornalText(await comunicacao.listJornal(a)),
+    },
+    {
+      name: 'escrever_jornal',
+      description: 'Grava uma matéria no Jornal MSY (seção principal). Por padrão fica como rascunho para revisar no portal; com publicar=true já sai publicada. Texto corrido: parágrafos separados por linha em branco, subtítulos com "## ". Só para a diretoria e quem gerencia o Jornal. Formato na skill msy-comunicacao.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          titulo: { type: 'string', maxLength: 160 },
+          resumo: { type: 'string', maxLength: 400, description: 'Uma ou duas frases que aparecem no card.' },
+          texto: { type: 'string', maxLength: 20000 },
+          publicar: { type: 'boolean' },
+          destaque: { type: 'boolean' },
+        },
+        required: ['titulo', 'texto'],
+      },
+      annotations: { title: 'Escrever no Jornal', ...WRITE },
+      run: async (a) => {
+        const p = await comunicacao.saveArticle(a);
+        return p.status === 'published'
+          ? `Matéria publicada no Jornal: "${p.title}" · materia ${p.id}. Está em ${url}/jornal.html.`
+          : `Rascunho salvo no Jornal: "${p.title}" · materia ${p.id}. Revise e publique em ${url}/jornal.html (ou com publicar_jornal).`;
+      },
+    },
+    {
+      name: 'publicar_jornal',
+      description: 'Publica uma matéria do Jornal que está em rascunho. Só para a diretoria e quem gerencia o Jornal.',
+      inputSchema: { type: 'object', properties: { materia_id: idProp('Matéria') }, required: ['materia_id'] },
+      annotations: { title: 'Publicar matéria do Jornal', ...WRITE, idempotentHint: true },
+      run: async (a) => {
+        const p = await comunicacao.publishArticle(a.materia_id);
+        return `Matéria publicada no Jornal: "${p.title}". Está em ${url}/jornal.html.`;
+      },
+    },
+    {
+      name: 'aviso_jornal',
+      description: 'Põe um aviso curto no letreiro do Jornal MSY (até 200 caracteres), com ícone, prioridade (0 normal, 1 alta, 2 urgente) e validade em dias. Só para a diretoria e quem gerencia o Jornal ou o ranking.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          mensagem: { type: 'string', maxLength: 200 },
+          icone: { type: 'string', description: 'Um emoji (padrão 📢).' },
+          prioridade: { type: 'integer', minimum: 0, maximum: 2 },
+          dias: { type: 'integer', minimum: 1, maximum: 90, description: 'Some depois de N dias; sem isso fica até alguém tirar.' },
+        },
+        required: ['mensagem'],
+      },
+      annotations: { title: 'Aviso no letreiro do Jornal', ...WRITE },
+      run: async (a) => {
+        const v = await comunicacao.addAviso(a);
+        return `Aviso no letreiro do Jornal: ${v.icone} ${v.mensagem}${v.expira_em ? ` (até ${fmtDate(v.expira_em.slice(0, 10))})` : ''}.`;
       },
     },
     {
