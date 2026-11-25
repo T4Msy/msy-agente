@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.0 — 2026-11-25
+
+- O resto do portal pelo agente:
+  - `biblioteca` e `gerir_biblioteca` (adicionar avisa a Ordem, como no portal).
+  - `gerir_notificacoes`: marcar como lidas ou apagar; `notificacoes` agora mostra o id.
+  - `meu_perfil` e `editar_perfil`: nome, iniciais, bio, cor, nascimento, WhatsApp e avisos. Cargo e status nunca.
+  - `enviar_sugestao` e `gerir_sugestao` (status e nota, só para quem cuida das sugestões, mesmo o banco sendo mais frouxo).
+  - `gerenciar_evento` (cancelar com motivo, concluir, excluir com o título exato) e `equipe_evento` (co-criadores).
+  - Pedido de troca: quem já confirmou e responde "não vou" gera um pedido, como no portal; `trocas_pendentes` e
+    `revisar_troca` para decidir (aprovar tira a confirmação e avisa o membro).
+
 ## 0.11.0 — 2026-11-25
 
 - Ações de diretoria pelo agente, com as permissões do portal:

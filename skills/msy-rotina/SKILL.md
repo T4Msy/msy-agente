@@ -57,3 +57,12 @@ Lembrete no celular: quem está liberado no bot Corvus pode receber o resumo no 
 `enviar_whatsapp` (membro = o próprio id, de `quem_sou`). Na rotina, escreva que esse envio está autorizado.
 
 Se não houver agendador na sessão, ofereça o resumo sob demanda (`/msy:hoje`) e explique a limitação.
+
+## O resto do portal
+
+- Notificações: `notificacoes` lista as não lidas com id; `gerir_notificacoes` marca como lidas ou apaga.
+- Perfil: `meu_perfil` e `editar_perfil` (nome, iniciais, bio, cor, nascimento, WhatsApp, avisos por push ou
+  e-mail). Cargo e status não mudam por aqui.
+- Biblioteca: `biblioteca` (cursos, PDFs, artigos e ferramentas com link). Quem cuida dela usa `gerir_biblioteca`.
+- Sugestões: `enviar_sugestao` manda uma ideia para a diretoria; `sugestoes` lista; quem cuida muda o status com
+  `gerir_sugestao`.

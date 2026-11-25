@@ -53,7 +53,8 @@ Datas e horários são de São Paulo. Prazos do checklist viram datas reais a pa
 ## 3. Portal e aviso
 
 - `criar_evento` quando o membro pedir (título, data, hora, tipo, descrição curta com objetivo e programação).
-  Mudanças depois: `editar_evento`. Cancelar e concluir são feitos no portal.
+  Mudanças depois: `editar_evento`; equipe (co-criadores) com `equipe_evento`. Cancelar (com motivo, fica no
+  histórico), concluir ou excluir (apaga de vez; pede o título exato): `gerenciar_evento`. Prefira cancelar a excluir.
 - Aviso no WhatsApp: escreva a mensagem curta (o quê, quando, onde, como confirmar no portal) e envie com
   `enviar_whatsapp` no grupo que o membro indicar. Mostre depois o destino e o texto que foi.
 - Membro sem permissão de criar ou editar eventos: o portal recusa. Entregue o briefing pronto para quem cuida dos eventos.

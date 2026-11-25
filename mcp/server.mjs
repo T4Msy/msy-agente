@@ -17,6 +17,7 @@ import { fmtDate } from '../lib/format.mjs';
 import { createComunicacao, comunicadosText, jornalText, justificationsText, COMUNICADO_CATEGORIAS } from '../lib/comunicacao.mjs';
 import { createDiretoria, PERMISSOES, ACOES_MEMBRO, ACOES_COMISSAO, mesLabel } from '../lib/diretoria.mjs';
 import { createGestao, projectLabel, PROJ_STATUS, PROJ_TIPO, PRIORIDADES } from '../lib/gestao.mjs';
+import { createMembro, libraryText, profileText, swapsText, BIB_CATEGORIAS, SUG_CATEGORIAS, SUG_STATUS, EVENTO_ACOES } from '../lib/membro.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
@@ -60,6 +61,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const consultas = createConsultas(client);
   const gestao = createGestao(client);
   const diretoria = createDiretoria(client);
+  const membro = createMembro(client);
   return [
     {
       name: 'guia',
@@ -118,13 +120,13 @@ export function buildTools(portal, client, { remote = false } = {}) {
     },
     {
       name: 'notificacoes',
-      description: 'Notificações não lidas do membro no portal.',
+      description: 'Notificações não lidas do membro no portal (com id, para marcar como lida ou apagar em gerir_notificacoes).',
       inputSchema: { type: 'object', properties: { limite: { type: 'integer', minimum: 1, maximum: 50 } } },
       annotations: { title: 'Notificações', ...READ },
       run: async (a) => {
         const rows = await portal.notifications({ limit: a.limite });
         if (!rows.length) return 'Nenhuma notificação não lida.';
-        return rows.map((n) => `- ${String(n.created_at).slice(0, 16).replace('T', ' ')} ${n.icon || ''} ${n.message}${n.link ? ` · ${url}/${String(n.link).replace(/^\//, '')}` : ''}`).join('\n');
+        return rows.map((n) => `- ${String(n.created_at).slice(0, 16).replace('T', ' ')} ${n.icon || ''} ${n.message}${n.link ? ` · ${url}/${String(n.link).replace(/^\//, '')}` : ''} · id ${n.id}`).join('\n');
       },
     },
     {
@@ -535,7 +537,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
     },
     {
       name: 'responder_evento',
-      description: 'Responde, pelo membro, se ele vai ou não a um evento (igual ao botão do portal). "nao_vou" pede a justificativa, que fica pendente para a diretoria analisar. Não marca presença: isso é registrar_presenca, de quem cuida dos eventos.',
+      description: 'Responde, pelo membro, se ele vai ou não a um evento (igual ao botão do portal). "nao_vou" pede a justificativa, que fica pendente para a diretoria analisar; se ele já tinha confirmado, vira um pedido de troca (decidido em revisar_troca). Não marca presença: isso é registrar_presenca, de quem cuida dos eventos.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -550,7 +552,9 @@ export function buildTools(portal, client, { remote = false } = {}) {
         const r = await comunicacao.respond(a.event_id, a);
         return r.resposta === 'vou'
           ? `Presença confirmada em "${r.evento.title}" (${fmtDate(r.evento.event_date, r.evento.event_time)}).`
-          : `Respondido que não vai a "${r.evento.title}". A justificativa ficou pendente de análise no portal.`;
+          : r.pedido_troca
+            ? `Você já tinha confirmado "${r.evento.title}", então virou um pedido de troca (como o "Solicitar troca" do portal). A presença só muda quando quem cuida dos eventos aprovar.`
+            : `Respondido que não vai a "${r.evento.title}". A justificativa ficou pendente de análise no portal.`;
       },
     },
     {
@@ -598,6 +602,64 @@ export function buildTools(portal, client, { remote = false } = {}) {
       run: async (a) => {
         const r = await comunicacao.reviewJustification(a.event_id, a);
         return `Justificativa de ${r.membro} em "${r.evento.title}" ${r.decisao}. O membro foi notificado no portal.`;
+      },
+    },
+    {
+      name: 'gerenciar_evento',
+      description: 'Cancela (com motivo; o evento fica no histórico), conclui ou exclui um evento, como os botões do portal. Excluir apaga de vez e pede o título exato em titulo_confirmacao. Quem pode é decidido pelo portal (cancelar_eventos, concluir_eventos, excluir_eventos, gerenciar_eventos ou diretoria). Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          event_id: idProp('Evento'),
+          acao: { type: 'string', enum: EVENTO_ACOES },
+          motivo: { type: 'string', maxLength: 1000, description: 'Obrigatório para cancelar.' },
+          titulo_confirmacao: { type: 'string', description: 'Para excluir: o título exato do evento.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['event_id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Cancelar, concluir ou excluir evento', ...WRITE, destructiveHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Confirme com o membro e chame de novo com confirmado=true.', isError: true };
+        const r = await membro.manageEvent({ ...a, id: a.event_id });
+        return { cancelar: `Evento "${r.evento.title}" cancelado. Ele continua no histórico com o motivo.`, concluir: `Evento "${r.evento.title}" marcado como concluído.`, excluir: `Evento "${r.evento.title}" excluído.` }[r.acao];
+      },
+    },
+    {
+      name: 'equipe_evento',
+      description: 'Define os co-criadores de um evento (a lista é trocada, como no formulário do portal). Nomes de membros ativos. Para quem cria, edita ou gerencia eventos. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: { event_id: idProp('Evento'), co_criadores: { type: 'array', items: { type: 'string' }, maxItems: 10 }, confirmado: { type: 'boolean' } },
+        required: ['event_id', 'co_criadores', 'confirmado'],
+      },
+      annotations: { title: 'Equipe do evento', ...WRITE, idempotentHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Confirme a equipe com o membro e chame de novo com confirmado=true.', isError: true };
+        const r = await membro.eventCrew({ id: a.event_id, co_criadores: a.co_criadores });
+        return r.co_criadores.length ? `Equipe de "${r.evento.title}": ${r.co_criadores.join(', ')}.` : `"${r.evento.title}" ficou sem co-criadores.`;
+      },
+    },
+    {
+      name: 'trocas_pendentes',
+      description: 'Pedidos de troca de presença esperando decisão (membro que tinha confirmado e pediu para não ir). Para a diretoria e quem cancela, gerencia eventos ou revisa justificativas.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { title: 'Pedidos de troca', ...READ },
+      run: async () => swapsText(await membro.pendingSwaps()),
+    },
+    {
+      name: 'revisar_troca',
+      description: 'Aprova ou recusa um pedido de troca de presença. Aprovar tira a confirmação e aceita a justificativa, como no portal; o membro é avisado. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: { id: idProp('Pedido de troca'), decisao: { type: 'string', enum: ['aprovar', 'recusar'] }, nota: { type: 'string', maxLength: 500 }, confirmado: { type: 'boolean' } },
+        required: ['id', 'decisao', 'confirmado'],
+      },
+      annotations: { title: 'Revisar troca', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Confirme a decisão com o membro e chame de novo com confirmado=true.', isError: true };
+        const r = await membro.reviewSwap(a);
+        return `Pedido de ${r.membro} em "${r.evento.title}" ${r.decisao === 'aprovar' ? 'aprovado: a presença virou não vai, com justificativa aceita' : 'recusado: a confirmação continua'}. O membro foi avisado.`;
       },
     },
     {
@@ -907,10 +969,128 @@ export function buildTools(portal, client, { remote = false } = {}) {
     },
     {
       name: 'sugestoes',
-      description: 'Sugestões dos membros (as mais votadas primeiro), com status e nota da diretoria. Use para a triagem na reunião da diretoria.',
-      inputSchema: { type: 'object', properties: { status: { type: 'string', description: 'Filtra por status (ex.: pendente, em_analise, aprovada).' }, limite: { type: 'integer', minimum: 1, maximum: 40 } } },
+      description: 'Sugestões dos membros (as mais votadas primeiro), com status e nota da diretoria. Use para a triagem na reunião da diretoria; para mudar o status, gerir_sugestao; para enviar uma, enviar_sugestao.',
+      inputSchema: { type: 'object', properties: { status: { type: 'string', enum: SUG_STATUS, description: 'Filtra por status.' }, limite: { type: 'integer', minimum: 1, maximum: 40 } } },
       annotations: { title: 'Sugestões', ...READ },
       run: async (a) => suggestionsText(await coordenacao.suggestions(a)),
+    },
+    {
+      name: 'biblioteca',
+      description: 'Conteúdos da Biblioteca do portal (cursos, PDFs, artigos, vídeos, ferramentas), com link. Filtra por categoria ou palavra.',
+      inputSchema: { type: 'object', properties: { categoria: { type: 'string', enum: BIB_CATEGORIAS }, busca: { type: 'string' }, limite: { type: 'integer', minimum: 1, maximum: 50 } } },
+      annotations: { title: 'Biblioteca', ...READ },
+      run: async (a) => libraryText(await membro.library(a)),
+    },
+    {
+      name: 'gerir_biblioteca',
+      description: 'Adiciona, edita ou remove um conteúdo da Biblioteca, como no portal (adicionar avisa a Ordem por notificação). Só diretoria ou quem tem gerenciar_biblioteca. Mostre o que vai gravar e só chame com confirmado=true depois do sim do membro.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          acao: { type: 'string', enum: ['adicionar', 'editar', 'remover'] },
+          id: idProp('Conteúdo (para editar ou remover)'),
+          titulo: { type: 'string', maxLength: 120 },
+          descricao: { type: 'string', maxLength: 1000 },
+          link: { type: 'string', description: 'Endereço completo, https://...' },
+          categoria: { type: 'string', enum: BIB_CATEGORIAS },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir biblioteca', ...WRITE, destructiveHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre ao membro o que vai mudar na biblioteca e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await membro.libraryManage(a);
+        return { adicionar: `Adicionado à biblioteca: "${r.item.titulo}". A Ordem foi avisada no portal.`, editar: `Conteúdo "${r.item.titulo}" atualizado.`, remover: `Removido da biblioteca: "${r.item.titulo}".` }[r.acao];
+      },
+    },
+    {
+      name: 'gerir_notificacoes',
+      description: 'Marca notificações do membro como lidas ou apaga (como o sino do portal). acao: ler (ids), ler_todas, apagar (ids), apagar_todas. Os ids vêm de notificacoes.',
+      inputSchema: {
+        type: 'object',
+        properties: { acao: { type: 'string', enum: ['ler', 'ler_todas', 'apagar', 'apagar_todas'] }, ids: { type: 'array', items: { type: 'string' }, maxItems: 50 } },
+        required: ['acao'],
+      },
+      annotations: { title: 'Gerir notificações', ...WRITE, idempotentHint: true },
+      run: async (a) => {
+        const r = await membro.notificationsAct(a);
+        return r.acao.startsWith('ler') ? `${r.total} notificação(ões) marcada(s) como lida(s).` : `${r.total} notificação(ões) apagada(s).`;
+      },
+    },
+    {
+      name: 'meu_perfil',
+      description: 'O perfil do próprio membro no portal: nome, iniciais, cargo, bio, cor, nascimento, WhatsApp e como recebe avisos.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { title: 'Meu perfil', ...READ },
+      run: async () => profileText(await membro.myProfile()),
+    },
+    {
+      name: 'editar_perfil',
+      description: 'Edita o próprio perfil, como a tela de perfil do portal: nome, iniciais, bio, cor, nascimento, WhatsApp (vazio apaga) e avisos (push, e-mail). Cargo e status não mudam por aqui. Confirme os valores com o membro e chame com confirmado=true.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          nome: { type: 'string', maxLength: 80 },
+          iniciais: { type: 'string', maxLength: 3 },
+          bio: { type: 'string', maxLength: 500 },
+          cor: { type: 'string', description: '#RRGGBB' },
+          nascimento: { type: 'string', description: 'AAAA-MM-DD' },
+          whatsapp: { type: 'string', description: 'DDD + número; vazio apaga.' },
+          notif_push: { type: 'boolean' },
+          notif_email: { type: 'boolean' },
+          email_notificacoes: { type: 'string' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['confirmado'],
+      },
+      annotations: { title: 'Editar perfil', ...WRITE, idempotentHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre ao membro o que vai mudar no perfil e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await membro.editProfile(a);
+        return `Perfil atualizado (${r.campos.join(', ')}).\n${profileText(r.perfil)}`;
+      },
+    },
+    {
+      name: 'enviar_sugestao',
+      description: 'Envia uma sugestão do membro para a diretoria, como a página Sugestões do portal (entra em análise). Mostre o texto antes e chame com confirmado=true.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          titulo: { type: 'string', maxLength: 140 },
+          categoria: { type: 'string', enum: SUG_CATEGORIAS },
+          texto: { type: 'string', maxLength: 4000 },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['titulo', 'texto', 'confirmado'],
+      },
+      annotations: { title: 'Enviar sugestão', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre a sugestão ao membro e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await membro.createSuggestion(a);
+        return `Sugestão "${r.title}" enviada; está em análise pela diretoria.`;
+      },
+    },
+    {
+      name: 'gerir_sugestao',
+      description: 'Muda o status de uma sugestão (nova, analise, planejada, concluida, recusada), com nota opcional, ou apaga. Só diretoria ou quem tem gerenciar_sugestoes. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: idProp('Sugestão'),
+          acao: { type: 'string', enum: ['status', 'excluir'] },
+          status: { type: 'string', enum: SUG_STATUS },
+          nota: { type: 'string', maxLength: 1000 },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir sugestão', ...WRITE, destructiveHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Confirme com o membro e chame de novo com confirmado=true.', isError: true };
+        const r = await membro.manageSuggestion(a);
+        return r.acao === 'excluir' ? `Sugestão "${r.sugestao.title}" apagada.` : `Sugestão "${r.sugestao.title}" agora está como ${r.sugestao.status}.`;
+      },
     },
     {
       name: 'corvus',

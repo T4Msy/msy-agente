@@ -20,6 +20,8 @@ Ações de diretoria pelo agente, sempre mostrando a mudança e com `confirmado=
 - `registrar_mensalidade`: marcar paga (pagamento por fora) ou de volta a pendente, por mês.
 - `salvar_ranking`: gravar o ranking da semana ou do mês com os números do bot.
 - `comissao_acao`: enviar para análise, aprovar, quitar, registrar pagamento a um participante ou cancelar.
+- `gerir_sugestao`: mudar o status de uma sugestão (com nota) ou apagar; `trocas_pendentes` e `revisar_troca` para
+  pedidos de troca de presença em eventos; `gerir_biblioteca` para a Biblioteca.
 O agente nunca usa essas ações na própria conta (nem a própria mensalidade). Ainda só no portal: criar e editar os
 valores de um cálculo de comissão e excluir um perfil de vez. Avisos sobre qualquer um desses assuntos
 (inclusive cobrança de mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa:

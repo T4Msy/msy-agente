@@ -8,7 +8,7 @@ description: Comunicação interna da Masayoshi — escolher o canal certo (comu
 Objetivo: a Ordem fica sabendo do que importa, uma vez, no canal certo, e a presença nos eventos fica registrada
 de verdade. Ferramentas do `msy-portal`: `comunicados`, `publicar_comunicado`, `jornal`, `escrever_jornal`,
 `publicar_jornal`, `aviso_jornal`, `responder_evento`, `registrar_presenca`, `justificativas_pendentes`,
-`revisar_justificativa`, e para avisos rápidos `whatsapp_grupos` e `enviar_whatsapp`. Planejar evento: skill `msy-eventos`.
+`revisar_justificativa`, `trocas_pendentes`, `revisar_troca`, e para avisos rápidos `whatsapp_grupos` e `enviar_whatsapp`. Planejar evento: skill `msy-eventos`.
 
 ## Interno fica interno
 
@@ -54,6 +54,9 @@ Letreiro (`aviso_jornal`): uma linha, até 200 caracteres, com validade (`dias`)
 
 - **Responder** (`responder_evento`): o próprio membro diz se vai. "Não vou" pede justificativa honesta e curta;
   ela fica pendente até a diretoria analisar. Responder cedo ajuda quem organiza a planejar pelo público real.
+  Quem já confirmou e diz "não vou" gera um **pedido de troca** (como o "Solicitar troca" do portal): a presença
+  só muda quando quem cuida dos eventos aprovar (`trocas_pendentes`, `revisar_troca`; aprovar tira a confirmação e
+  aceita a justificativa, e o membro é avisado).
 - **Registrar quem foi** (`registrar_presenca`): só diretoria e quem tem permissão de registrar presenças, no dia do
   evento ou depois. Passe os nomes como aparecem no portal; se um nome bater com mais de uma pessoa, nada é gravado
   e a ferramenta lista as opções: confirme com o membro. Quem não está nas listas fica como estava.

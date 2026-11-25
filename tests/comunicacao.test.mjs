@@ -25,16 +25,21 @@ test('texto vira blocos do Jornal: subtítulo e parágrafos', () => {
     { type: 'paragraph', text: 'Abertura da matéria continua aqui.' }, { type: 'heading', text: 'O que vem' }, { type: 'paragraph', text: 'Segundo parágrafo.' }]);
 });
 
-test('responder evento: vou, não vou com justificativa pendente, e não mexe na presença', async () => {
+test('responder evento: não vou com justificativa pendente; depois de confirmar, não vou vira pedido de troca', async () => {
   const c = grant();
-  await c.respond(EVENTO_FUTURO, { resposta: 'vou' });
-  let p = pres(EVENTO_FUTURO, MEMBRO.id);
-  assert.equal(p.response_status, 'participar'); assert.equal(p.status, 'confirmado'); assert.equal(p.attendance_status, undefined);
   await assert.rejects(c.respond(EVENTO_FUTURO, { resposta: 'nao_vou' }), /justificativa/);
   await c.respond(EVENTO_FUTURO, { resposta: 'nao_vou', justificativa: 'Viagem de trabalho' });
-  p = pres(EVENTO_FUTURO, MEMBRO.id);
+  let p = pres(EVENTO_FUTURO, MEMBRO.id);
   assert.equal(p.status, 'justificado'); assert.equal(p.justificativa_status, 'pendente');
+  await c.respond(EVENTO_FUTURO, { resposta: 'vou' });
+  p = pres(EVENTO_FUTURO, MEMBRO.id);
+  assert.equal(p.response_status, 'participar'); assert.equal(p.status, 'confirmado'); assert.equal(p.attendance_status, undefined);
   assert.equal(fake.db.event_presencas.filter((x) => x.event_id === EVENTO_FUTURO).length, 1, 'atualiza a linha, não duplica');
+  const r = await c.respond(EVENTO_FUTURO, { resposta: 'nao_vou', justificativa: 'Surgiu plantão' });
+  assert.equal(r.pedido_troca, true);
+  assert.equal(pres(EVENTO_FUTURO, MEMBRO.id).status, 'confirmado', 'a presença só muda quando aprovarem');
+  assert.equal(fake.db.event_cancel_requests.filter((x) => x.status === 'pendente').length, 1);
+  await assert.rejects(c.respond(EVENTO_FUTURO, { resposta: 'nao_vou', justificativa: 'De novo' }), /já tem um pedido de troca/);
   await assert.rejects(c.respond(EVENTO, { resposta: 'vou' }), /já passou/);
 });
 
