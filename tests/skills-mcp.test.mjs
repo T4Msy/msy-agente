@@ -34,11 +34,11 @@ test('requisição moderna malformada e versão desconhecida são recusadas como
   await assert.rejects(srv.handle({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: { ...META, 'io.modelcontextprotocol/protocolVersion': '1900-01-01' } } }), (e) => e.rpcCode === -32022 && e.data.requested === '1900-01-01');
 });
 
-test('skills/list: as 13 skills, URI = nome, hash e tamanho batem com o conteúdo lido', async () => {
+test('skills/list: as 15 skills, URI = nome, hash e tamanho batem com o conteúdo lido', async () => {
   const r = await call('skills/list');
   assert.equal(r.resultType, 'complete');
   assert.ok(r.ttlMs > 0 && r.cacheScope === 'public');
-  assert.equal(r.skills.length, 13);
+  assert.equal(r.skills.length, 15);
   for (const s of r.skills) {
     const name = s.frontmatter.name;
     assert.equal(s.uri, `skill://${name}/SKILL.md`);
