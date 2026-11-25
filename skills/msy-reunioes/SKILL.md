@@ -37,7 +37,7 @@ Em uma frase: <o principal: ex. "3 entregas, 2 travas no Portal e 1 decisão de 
 ```
 
 Regras: decisões primeiro na pauta (é o que precisa do grupo junto); entregas são leitura rápida. Nada de expor
-alguém: "sem entrega registrada" é fato do portal, não acusação. Dado pessoal ou financeiro fica fora do resumo.
+alguém: "sem entrega registrada" é fato do portal, não acusação.
 
 Entrega: na conversa. Se o membro pedir, salve em `.md` ou mande pela ferramenta que ele conectou (e-mail, chat).
 
@@ -49,14 +49,12 @@ formato da skill msy-reunioes até 1 hora antes do horário." Para a call semana
 
 ## 2. Durante: gravar e transcrever
 
-- **Avise todos antes de gravar ou transcrever** (LGPD e respeito ao grupo). Sem concordância, só anotações.
 - Fontes de transcrição, da mais simples para a mais trabalhosa:
   1. Transcrição do próprio Meet/Teams/Zoom → baixe o `.vtt`/`.txt` (no Meet fica no Drive do organizador; se o
      membro conectou o Google Drive ao agente, procure lá).
   2. Ferramenta de reuniões conectada ao host (ex.: um conector de reuniões que já traga a transcrição).
   3. Áudio gravado → transcreva localmente se houver Whisper (`whisper reuniao.m4a --language pt --output_format vtt`)
-     ou com a ferramenta de transcrição que o membro tiver conectado. Não envie áudio do grupo a serviço que o
-     membro não escolheu.
+     ou com a ferramenta de transcrição que o membro tiver conectado.
 - `ler_transcricao` com o caminho do arquivo devolve o texto limpo e quem falou quanto. Locutores sem nome
   ("SPEAKER_00"): pergunte ao membro quem é quem antes de escrever a ata.
 
@@ -88,8 +86,8 @@ Participantes: <nomes> · Ausentes: <nomes, se souber> · Duração: <hh:mm>
 <data/hora, se combinada>
 ```
 
-Regras da ata: só o que foi dito; o que ficou ambíguo vai com "(confirmar)". Sem falas literais longas, sem
-assunto pessoal/sensível, sem a transcrição inteira (ela não vai para o portal). Encaminhamento sem dono ou sem prazo
+Regras da ata: só o que foi dito; o que ficou ambíguo vai com "(confirmar)". Sem falas literais longas e sem a
+transcrição inteira (a ata é o resumo). Encaminhamento sem dono ou sem prazo
 vai para "Pendências sem dono", não ganha dono inventado.
 
 Depois de mostrar a ata e o membro aprovar:

@@ -85,7 +85,7 @@ export function checkEdit(file, text) {
   if (/\.(ts|js|mjs|cjs)$/.test(file)) {
     lines.forEach((t, i) => {
       if (/\.(query|execute|raw|unsafe)\(\s*`[^`]*\$\{/.test(t)) add(i, 'SQL montado com template string: use parâmetro ($1, $2) ou o construtor de consultas.');
-      if (/console\.(log|info|debug)\([^)]*\b(password|senha|token|cpf|access_token|refresh_token)\b/i.test(t)) add(i, 'log com senha/token/dado pessoal. Logue só o código do erro.');
+      if (/console\.(log|info|debug)\([^)]*\b(password|senha|token|access_token|refresh_token)\b/i.test(t)) add(i, 'log com senha ou token. Logue só o código do erro.');
     });
   }
   if (/\.py$/.test(file)) lines.forEach((t, i) => { if (/\.execute\(\s*f["']/.test(t)) add(i, 'SQL montado com f-string: use parâmetro.'); });

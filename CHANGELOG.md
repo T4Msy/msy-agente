@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 — 2026-11-25
+
+- Sem LGPD no agente: saem as regras `sec-dados-pessoais` e `sec-gravacao-reuniao` e as menções nas skills de
+  reuniões e segurança (ficam 13 regras). Continua o aviso de senha/token em log (segurança).
+
 ## 0.2.0 — 2026-11-25
 
 Reuniões.
@@ -11,7 +16,7 @@ Reuniões.
 - Ata no portal (`registrar_ata`, `/msy:ata`), ligada à reunião e aos leitores; encaminhamentos viram tarefas
   (`criar_tarefa`, só gestor) com aviso ao responsável.
 - Reuniões (agendadas, gerais e calls do grupo) na `agenda` e no `.ics`; `reunioes` no MCP e na CLI.
-- Skill `msy-reunioes`, regra `sec-gravacao-reuniao` (consentimento e LGPD).
+- Skill `msy-reunioes`.
 
 ## 0.1.0 — 2026-11-25
 

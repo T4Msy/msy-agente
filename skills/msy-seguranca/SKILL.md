@@ -1,6 +1,6 @@
 ---
 name: msy-seguranca
-description: Revisão de segurança antes de entregar, commitar ou publicar — segredos, permissão no servidor, RLS do Supabase, XSS, SQL injection, dados pessoais (LGPD), dependências e configuração de deploy — com explicação simples para membros iniciantes. Use antes de mandar tarefa para revisão, abrir PR ou publicar, ao mexer em login, permissão, pagamento, upload ou dado pessoal, ou quando o membro pedir "isso está seguro?".
+description: Revisão de segurança antes de entregar, commitar ou publicar — segredos, permissão no servidor, RLS do Supabase, XSS, SQL injection, dependências e configuração de deploy — com explicação simples para membros iniciantes. Use antes de mandar tarefa para revisão, abrir PR ou publicar, ao mexer em login, permissão, pagamento ou upload, ou quando o membro pedir "isso está seguro?".
 ---
 
 # Revisão de segurança
@@ -15,11 +15,10 @@ não se aplica. No fim, explique ao membro em linguagem simples o que cada probl
    `SECURITY DEFINER` confere quem chama e fixa `search_path`?
 4. **Entrada do usuário**: escapada ao exibir (`Utils.escapeHtml`/`textContent`), parametrizada em consulta, validada
    no servidor (tipo, tamanho, formato), upload com limite de tamanho e tipo?
-5. **Dados pessoais**: só o necessário, nada em log, nada público, dados de teste falsos?
-6. **Dependências**: pacote novo é conhecido e mantido? (`npm audit` se houver `package.json`). Nada de copiar
+5. **Dependências**: pacote novo é conhecido e mantido? (`npm audit` se houver `package.json`). Nada de copiar
    script de CDN desconhecida.
-7. **Erros**: mensagem para o usuário sem detalhe interno (stack, SQL, caminho de servidor)?
-8. **Deploy/config**: variáveis no lugar certo (Vercel/Supabase Secrets), CORS restrito, nada de debug ligado em produção.
+6. **Erros**: mensagem para o usuário sem detalhe interno (stack, SQL, caminho de servidor)?
+7. **Deploy/config**: variáveis no lugar certo (Vercel/Supabase Secrets), CORS restrito, nada de debug ligado em produção.
 
 Achou problema grave (segredo vazado, dado aberto sem login)? Pare, avise o membro e o gestor, e trate antes de
 qualquer outra coisa: chave vazada se troca na hora, não só se apaga do código.
