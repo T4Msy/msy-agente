@@ -6,14 +6,18 @@ description: Visão da diretoria da Masayoshi — painel da semana, rascunho do 
 # Diretoria
 
 Objetivo: a diretoria decide com números atualizados, em pouco tempo, e o Corvus trabalha a favor da Ordem.
-Ferramentas do `msy-portal`: `painel`, `relatorio_semanal`, `sugestoes`, `corvus`, `disparo`, e tudo da
+Ferramentas do `msy-portal`: `painel`, `relatorio_semanal`, `sugestoes`, `corvus`, `disparo`, `membros`,
+`ranking_mensagens`, `mensalidade`, `comissoes`, `icm`, e tudo da
 skill `msy-coordenacao` (saúde dos membros, presenças, atividades, Huginn).
 
-## Fica só no portal
+## Consultas e o que ainda é no portal
 
-O agente não muda permissões, não aprova nem remove membro, não registra pagamento de mensalidade, não mexe em
-ICM³ nem em comissionamento: isso é feito no portal. Avisos sobre qualquer um desses assuntos (inclusive cobrança de
-mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa: `revisar_tarefa`, para gestor do projeto.
+Consultar pelo agente: `membros` (quem é quem, cargo, nível), `ranking_mensagens`, `mensalidade` (quem pagou
+e quem está pendente no mês), `comissoes` (`todas=true` para quem administra) e `icm` de qualquer membro.
+Ainda no portal, até o agente ganhar essas ações: aprovar, desativar ou mudar cargo de membro, permissões,
+registrar pagamento de mensalidade e mexer no comissionamento. Avisos sobre qualquer um desses assuntos
+(inclusive cobrança de mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa:
+`revisar_tarefa`, para gestor do projeto.
 
 ## 1. Painel
 

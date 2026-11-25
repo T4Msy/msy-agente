@@ -15,6 +15,7 @@ import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
 import { createEventos, eventsText, eventDetailText, historyText, EVENT_TYPES } from '../lib/eventos.mjs';
 import { fmtDate } from '../lib/format.mjs';
 import { createComunicacao, comunicadosText, jornalText, justificationsText, COMUNICADO_CATEGORIAS } from '../lib/comunicacao.mjs';
+import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
 import { SKILLS_EXTENSION, skillsList, skillsGet, isSkillUri, readSkillResource, readSkillDirectory, skillResourcesForList } from '../lib/skills-mcp.mjs';
@@ -54,6 +55,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const eventos = createEventos(client);
   const comunicacao = createComunicacao(client);
   const coordenacao = createCoordenacao(client, { whatsapp });
+  const consultas = createConsultas(client);
   return [
     {
       name: 'guia',
@@ -540,6 +542,41 @@ export function buildTools(portal, client, { remote = false } = {}) {
         const o = await coordenacao.addObservation(a);
         return `Observação registrada na Supervisão: "${o.title}". Está em ${url}/supervisao.html.`;
       },
+    },
+    {
+      name: 'membros',
+      description: 'Diretório da Ordem: quem é quem, cargo, nível (Diretoria ou Membro) e último acesso ao portal. Com nome: a ficha do membro (cargo, desde quando, bio) e os projetos dele que você pode ver, com a função e se é gestor. Com busca: filtra por nome, cargo ou nível. Use antes de criar tarefa, convidar para evento ou mandar aviso, para acertar a pessoa.',
+      inputSchema: { type: 'object', properties: { nome: { type: 'string', description: 'Nome (ou parte) de um membro para ver a ficha.' }, busca: { type: 'string', description: 'Filtra a lista por nome, cargo ou nível.' }, inativos: { type: 'boolean', description: 'Inclui membros inativos ou pendentes.' } } },
+      annotations: { title: 'Membros e cargos', ...READ },
+      run: async (a) => membersText(await consultas.members(a)),
+    },
+    {
+      name: 'ranking_mensagens',
+      description: 'Ranking de mensagens no grupo da Ordem no WhatsApp (o bot Corvus conta por dia; semanas antigas vêm do ranking semanal importado), com quem não mandou nada e os recordes (top 3). periodo: semana (padrão, desde domingo), semana_passada, mes, mes_passado ou livre (com de e ate).',
+      inputSchema: { type: 'object', properties: { periodo: { type: 'string', enum: ['semana', 'semana_passada', 'mes', 'mes_passado', 'livre'] }, de: { type: 'string', description: 'AAAA-MM-DD (periodo livre)' }, ate: { type: 'string', description: 'AAAA-MM-DD (periodo livre)' } } },
+      annotations: { title: 'Ranking de mensagens', ...READ },
+      run: async (a) => rankingText(await consultas.messageRanking(a)),
+    },
+    {
+      name: 'icm',
+      description: 'Resultado do teste ICM³ (pontuação, classificação, espectro dominante, dimensões, consistência). Sem membro: o seu. O de outro membro só a diretoria consulta, como no portal. O teste em si é feito em icm.html.',
+      inputSchema: { type: 'object', properties: { membro: { type: 'string', description: 'Nome do membro (só diretoria, para outra pessoa).' } } },
+      annotations: { title: 'ICM³', ...READ },
+      run: async (a) => icmText(await consultas.icm(a)),
+    },
+    {
+      name: 'comissoes',
+      description: 'Comissionamento dos projetos. Padrão: as suas comissões aprovadas (recebido, a receber, por projeto). todas=true: todos os cálculos, para quem administra o comissionamento. id: o detalhe de um cálculo (participantes, valores, pagamentos). As permissões do portal decidem o que aparece.',
+      inputSchema: { type: 'object', properties: { todas: { type: 'boolean' }, id: idProp('Cálculo de comissão') } },
+      annotations: { title: 'Comissões', ...READ },
+      run: async (a) => commissionsText(await consultas.commissions(a)),
+    },
+    {
+      name: 'mensalidade',
+      description: 'Mensalidade. Para o membro: a dele no mês e o histórico. Para a diretoria e quem tem a permissão de mensalidade: quem pagou e quem está pendente no mês (ou um membro). mes no formato AAAA-MM (padrão, o mês atual). O pagamento em si é feito em mensalidade.html.',
+      inputSchema: { type: 'object', properties: { mes: { type: 'string', description: 'AAAA-MM' }, membro: { type: 'string', description: 'Nome do membro.' } } },
+      annotations: { title: 'Mensalidade', ...READ },
+      run: async (a) => monthlyText(await consultas.monthly(a)),
     },
     {
       name: 'sugestoes',

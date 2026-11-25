@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 — 2026-11-25
+
+- Consultas que dão contexto ao agente, com as permissões do portal:
+  - `membros`: quem é quem, cargo, nível, último acesso e a ficha com os projetos.
+  - `ranking_mensagens`: mensagens no grupo por período, quem não mandou e recordes.
+  - `icm`: o resultado do próprio membro; o de outro, só a diretoria.
+  - `comissoes`: as comissões do membro; todas para quem administra o comissionamento.
+  - `mensalidade`: a do membro; quem pagou no mês para a diretoria e quem tem a permissão.
+- Skills de contexto e diretoria apontam para as consultas novas.
+- Cobrança e nomes de quem sumiu podem ir para o grupo quando o membro pedir.
+
 ## 0.8.1 — 2026-11-25
 
 - Nova ferramenta `revisar_tarefa`: o gestor do projeto aprova a tarefa em revisão ou pede ajustes pelo agente, e o

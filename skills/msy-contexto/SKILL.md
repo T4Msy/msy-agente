@@ -43,4 +43,6 @@ ajude o membro a cumprir prazo e a avisar cedo quando não vai dar.
 - `referencias/portal.md` — o que existe no portal, stack e arquivos que mandam (para quem vai mexer nele).
 
 Dados ao vivo (quem é o membro, projetos, tarefas) vêm das ferramentas MCP `msy-portal` (`quem_sou`,
-`minhas_tarefas`, `tarefa`). Não invente cargo, prazo ou status: consulte.
+`minhas_tarefas`, `tarefa`). Quem é quem na Ordem e o cargo de cada um: `membros`. Mensagens no grupo:
+`ranking_mensagens`. Mensalidade, comissões e ICM³ do próprio membro: `mensalidade`, `comissoes`, `icm`.
+Não invente cargo, prazo ou status: consulte.

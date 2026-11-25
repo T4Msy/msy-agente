@@ -18,9 +18,10 @@ export const BIA = '00000000-0000-4000-8000-00000000000d';
 export function fixtures(today = todayISO()) {
   const d = (n) => addDaysISO(today, n);
   return {
-    profiles: [{ id: MEMBRO.id, name: 'Membro Teste', role: 'Designer Oficial', tier: 'membro', status: 'ativo', username: 'membro' },
+    profiles: [{ id: MEMBRO.id, name: 'Membro Teste', role: 'Designer Oficial', tier: 'membro', status: 'ativo', username: 'membro', join_date: '2025-03-01',
+        icm: { score: 71, classificacao: 'OPERADOR ESTRATÉGICO', dominante: 'CORVUS', secundario: 'AEGIS', consistencia: 80, timestamp: '2026-10-01T12:00:00Z' } },
       { id: OUTRO.id, name: OUTRO.name, role: 'Membro', tier: 'membro', status: 'ativo' },
-      { id: BIA, name: 'Bia Lima', role: 'Membro', tier: 'membro', status: 'ativo' },
+      { id: BIA, name: 'Bia Lima', role: 'Membro', tier: 'membro', status: 'ativo', icm: { score: 88 } },
       { id: '00000000-0000-4000-8000-00000000000e', name: 'Bruno Costa', role: 'Membro', tier: 'membro', status: 'ativo' },
       { id: '00000000-0000-4000-8000-00000000000f', name: 'Bruno Alves', role: 'Membro', tier: 'membro', status: 'ativo' }],
     member_permissions: [],
@@ -80,6 +81,10 @@ export function fixtures(today = todayISO()) {
     supervision_cases: [], supervision_reminders: [], supervision_observations: [],
     bot_send_policy: [],
     bot_automations: [{ key: 'evento_1h', category: 'eventos', label: 'Evento em 1 hora', enabled: true, to_group: true, to_private: false, offset_minutes: 60, template: 'Começa em 1h: {titulo}', sort: 1 }],
+    weekly_rankings: [{ week_start: d(-70), week_end: d(-64), tipo: 'semanal', entries: [{ user_id: BIA, name: 'Bia Lima', messages: 40 }] }],
+    msy_recordes_top3: [{ tipo: 'semanal', posicao: 1, nome: 'Bia Lima', mensagens: 300, periodo: 'semana' }],
+    mensalidades: [{ user_id: MEMBRO.id, mes_referencia: today.slice(0, 7), status: 'pendente', valor: 30, data_pagamento: null },
+      { user_id: OUTRO.id, mes_referencia: today.slice(0, 7), status: 'pago', valor: 30, data_pagamento: `${today}T10:00:00Z` }],
     msy_suggestions: [{ id: 's1', title: 'Noite de jogos mensal', category: 'eventos', status: 'aberta', votes_count: 7, body: 'Uma por mês', created_at: `${d(-5)}T12:00:00Z` },
       { id: 's2', title: 'Canal de vagas', category: 'carreira', status: 'aprovada', votes_count: 3, body: 'Vagas', created_at: `${d(-9)}T12:00:00Z` }],
   };
@@ -162,6 +167,11 @@ export function startFakeSupabase({ today } = {}) {
           return send(200, null);
         }
         if (fn === 'can_access_supervision') return send(200, !!state.supervision);
+        if (fn === 'commission_read') {
+          if (body.p_own) return send(200, { own: [{ id: 'c1', project_name: 'Site da padaria', status: 'approved', settled_at: null, execution: { final_cents: 50000 }, referral_cents: 10000, payments: [{ amount_cents: 20000 }] }] });
+          if (!state.commissionAdmin) return send(403, { code: '42501', message: 'Acesso negado.' });
+          return send(200, { projects: [{ id: 'c1', status: 'approved', input: { project_name: 'Site da padaria', client_name: 'Padaria', gross_cents: 300000 } }], payments: [] });
+        }
         if (fn === 'notify_project') return send(200, (body.p_user_ids || []).length);
         if (fn === 'task_request_review') { t.status = 'em_revisao'; t.revisions_count = (t.revisions_count || 0) + 1; return send(200, null); }
         return send(404, { message: 'função desconhecida' });
