@@ -42,7 +42,7 @@ Um plugin único para todos os membros, com três camadas que se completam:
 | Checagens só no trecho novo e sem bloquear | Avisa o agente para corrigir e explicar; bloquear edição frustra e é contornado. Bloqueio fica para o irreversível (push forçado/branch protegida, segredo no push). |
 | Skill por papel no projeto | `project_participants.roles[]` diz o que a pessoa faz *naquele* projeto; o cargo na Ordem é secundário. |
 | Personalização em `~/.msy/perfil.md` + MCPs do próprio membro | O plugin é o padrão; o uso é de cada um (agenda, rotina, jeito de aprender). |
-| Escritas pedem confirmação explícita; aprovar não existe | Mudança de status é visível para o gestor e liga o relógio. Aprovação é decisão humana; o banco impede o responsável que não é gestor de se aprovar. |
+| Escritas pedem confirmação explícita | Mudança de status é visível para o gestor e liga o relógio. Aprovar é decisão do gestor, que pode pedir ao agente dele (`revisar_tarefa`); o banco impede o responsável que não é gestor de se aprovar. |
 | Texto do portal cercado por ⟦ ⟧ | Descrição de tarefa é escrita por pessoas: informação, não ordem ao agente (proteção contra injeção de prompt). |
 
 ## Fluxo típico
@@ -51,7 +51,7 @@ Um plugin único para todos os membros, com três camadas que se completam:
 2. Membro: "bora fazer a atrasada" → `msy-tarefas`: briefing (`tarefa`) → dúvidas → plano → `iniciar_tarefa` (com confirmação).
 3. Papel UX/UI → `msy-ux`: fluxo, hierarquia, estados, verificação visual. Hooks avisam se escapar `innerHTML` sem escape etc.
 4. `/msy:entregar` → testes, `msy-seguranca`, checklist, nota de execução → `enviar_revisao` (com confirmação).
-5. Gestor revisa no portal (com ajuda do agente dele via `fila_revisao`) e aprova ou pede ajustes.
+5. Gestor revisa com o agente dele (`fila_revisao`, `tarefa`) e aprova ou pede ajustes (`revisar_tarefa`) ou no portal.
 
 ## Próximos passos
 

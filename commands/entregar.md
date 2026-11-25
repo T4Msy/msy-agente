@@ -9,5 +9,5 @@ Use as skills msy-tarefas (passo 6) e msy-seguranca para a tarefa: $ARGUMENTS
 2. Revisão de segurança do diff da branch. Interface mexida: checklist do msy-ux.
 3. Atualize o checklist da tarefa com o que foi feito e verificado.
 4. Escreva a nota de execução (o que foi feito, como testar, não verificado, branch/PR) e mostre ao membro.
-5. Só com o "sim" do membro: `enviar_revisao` com confirmado=true. Diga que agora o gestor aprova ou pede ajustes no portal.
+5. Só com o "sim" do membro: `enviar_revisao` com confirmado=true. Diga que agora o gestor aprova ou pede ajustes.
 Se algo não passou, não envie: diga o que falta.

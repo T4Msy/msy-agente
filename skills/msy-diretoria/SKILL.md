@@ -11,8 +11,9 @@ skill `msy-coordenacao` (saúde dos membros, presenças, atividades, Huginn).
 
 ## Fica só no portal
 
-Por decisão da diretoria, o agente não aprova tarefa, não muda permissões, não aprova nem remove membro,
-não mexe em mensalidade ou pagamento, ICM³ nem comissionamento. Se pedirem, diga onde fazer no portal.
+O agente não muda permissões, não aprova nem remove membro, não registra pagamento de mensalidade, não mexe em
+ICM³ nem em comissionamento: isso é feito no portal. Avisos sobre qualquer um desses assuntos (inclusive cobrança de
+mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa: `revisar_tarefa`, para gestor do projeto.
 
 ## 1. Painel
 
@@ -49,5 +50,6 @@ nome de cada um. Só para quem a diretoria liberou. Boas práticas:
 - Mensagem curta, com o que a pessoa precisa fazer e até quando, e o link do portal quando houver.
 - Aviso geral para todos costuma ir melhor no grupo (`enviar_whatsapp` com o grupo) e como comunicado;
   disparo no privado é para quando cada um precisa agir (confirmar presença, entregar algo).
-- Advertência, avaliação e mensalidade nunca vão por disparo: são conversas individuais.
+- Aviso de mensalidade, advertência ou avaliação também podem ir por disparo se o membro pedir; quando o texto é sobre
+  uma pessoa só, sugira o privado dela.
 - Depois, diga quem recebeu e quem falhou (sem WhatsApp cadastrado ou desativado na Central do Bot).

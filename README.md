@@ -79,7 +79,7 @@ node bin/msy.mjs perfil | doctor | logout
 ## Como funciona e segurança
 
 O agente só vê e muda o que o membro vê e muda no portal: toda chamada usa o login do membro e as regras (RLS) do
-banco. Ele não tem chave de administrador. Aprovar tarefa é sempre decisão humana do gestor, no portal: o agente não tem ferramenta para isso, e o
+banco. Ele não tem chave de administrador. Aprovar tarefa é decisão do gestor do projeto, que pode fazer no portal ou pedir ao agente dele; o
 banco impede o responsável que não é gestor de aprovar a si mesmo. Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 
 Desenvolvendo o plugin: leia [`AGENTS.md`](AGENTS.md). Testes: `npm test`.

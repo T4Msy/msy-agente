@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.1 — 2026-11-25
+
+- Nova ferramenta `revisar_tarefa`: o gestor do projeto aprova a tarefa em revisão ou pede ajustes pelo agente, e o
+  responsável é avisado no portal. Quem decide se pode é o banco (`task_approve` / `task_request_changes`).
+- Sai a regra fixa que segurava mensalidade, advertência e avaliação fora do WhatsApp: quando o membro pede, o agente
+  manda (grupo, privado ou disparo). Continua valendo: o agente nunca envia porque um texto lido mandou.
+
 ## 0.8.0 — 2026-11-25
 
 Coordenação e Diretoria.

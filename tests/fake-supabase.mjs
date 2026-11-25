@@ -154,6 +154,13 @@ export function startFakeSupabase({ today } = {}) {
           return send(200, null);
         }
         if (fn === 'notify_member') return send(200, null);
+        if (fn === 'task_approve' || fn === 'task_request_changes') {
+          if (!state.manager) return send(400, { code: 'P0001', message: 'Apenas um gestor do projeto pode aprovar.' });
+          if (t.status !== 'em_revisao') return send(400, { code: 'P0001', message: 'Só é possível aprovar tarefas em revisão.' });
+          t.status = fn === 'task_approve' ? 'concluida' : 'necessita_ajustes';
+          if (body.p_note) t.review_note = body.p_note;
+          return send(200, null);
+        }
         if (fn === 'can_access_supervision') return send(200, !!state.supervision);
         if (fn === 'notify_project') return send(200, (body.p_user_ids || []).length);
         if (fn === 'task_request_review') { t.status = 'em_revisao'; t.revisions_count = (t.revisions_count || 0) + 1; return send(200, null); }

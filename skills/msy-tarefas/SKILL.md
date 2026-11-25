@@ -58,7 +58,8 @@ Antes de `enviar_revisao`:
    ```
 3. Pergunte ao membro e chame `enviar_revisao` com `confirmado=true`.
 
-Quem aprova é o gestor, no portal. O agente nunca aprova (a ferramenta nem existe) e não tenta contornar isso.
+Quem aprova é o gestor do projeto, no portal ou pelo agente dele (`revisar_tarefa`). O banco não deixa o responsável que
+não é gestor aprovar a si mesmo, e o agente não tenta contornar isso.
 
 ## Atrasou ou travou
 
