@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 — 2026-11-25
+
+Coordenação e Diretoria.
+- 11 ferramentas novas: `saude_membros`, `presencas`, `atividades_equipe`, `alertas_huginn`, `painel`,
+  `relatorio_semanal`, `criar_atividade`, `registrar_observacao`, `sugestoes`, `corvus` e `disparo`.
+- Saúde dos membros, Huginn e painel usam os dados da Supervisão: o agente confere o acesso antes e explica quando falta.
+- `corvus` muda o bot só para quem a diretoria liberou (controla o Corvus); `disparo` só com a liberação de disparo.
+- Skills `msy-coordenacao` e `msy-diretoria`; comandos `/msy:painel` e `/msy:quem-sumiu`.
+
 ## 0.7.0 — 2026-11-25
 
 Resto da Comunicação interna: presença, comunicados e Jornal MSY.
