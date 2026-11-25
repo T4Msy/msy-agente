@@ -50,15 +50,13 @@ test('quem não está liberado no bot recebe o motivo e onde pedir acesso', asyn
   } finally { fake.state.botAllowed = true; }
 });
 
-test('ferramenta enviar_whatsapp exige confirmação', async () => {
+test('ferramenta enviar_whatsapp envia direto, sem confirmado, e manda o app para o histórico', async () => {
   const srv = createServer({ client });
   const n = fake.state.whatsapp.length;
-  const no = await srv.handle({ id: 1, method: 'tools/call', params: { name: 'enviar_whatsapp', arguments: { grupo: GRUPO, mensagem: 'oi', confirmado: false } } });
-  assert.equal(no.isError, true);
-  assert.equal(fake.state.whatsapp.length, n);
-  const yes = await srv.handle({ id: 2, method: 'tools/call', params: { name: 'enviar_whatsapp', arguments: { grupo: GRUPO, nome: 'Masayoshi Geral', mensagem: 'oi', confirmado: true } } });
-  assert.equal(yes.isError, false);
+  const r = await srv.handle({ id: 2, method: 'tools/call', params: { name: 'enviar_whatsapp', arguments: { grupo: GRUPO, nome: 'Masayoshi Geral', mensagem: 'oi' } } });
+  assert.equal(r.isError, false);
   assert.equal(fake.state.whatsapp.length, n + 1);
+  assert.equal(fake.state.whatsapp.at(-1).app, 'plugin local');
 });
 
 test('redirecionamento portalmsy.site → www mantém o login; para outro site, recusa', async () => {
