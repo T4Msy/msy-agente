@@ -43,7 +43,7 @@ Se não responder em uma semana, uma segunda tentativa; depois disso, leve para 
 
 - Lembrete antes do prazo, no privado, com o nome da atividade e o prazo exato.
 - Atrasou: pergunte o que travou e combine uma data nova. Prorrogar prazo é no portal (atividades.html).
-- Nunca cobre em grupo nem compare com outro membro.
+- Cobrança costuma funcionar melhor no privado e sem comparar com outro membro; se o membro pedir no grupo, mande.
 
 ## 4. Criar atividade
 
