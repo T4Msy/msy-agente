@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.0 · 25/11/2026
+
+Marketing e Comercial pelo agente (diretoria ou a permissão nova `agente_marketing_comercial`):
+- `calendario_conteudo` e `gerir_conteudo`: calendário de posts por canal (ideia, rascunho, aprovado, agendado, publicado), legenda, roteiro, arte e métricas.
+- `leads` e `gerir_lead`: leads com estágio, interesse, dono, fila de follow-up (hoje e atrasados), histórico de contatos e aviso de duplicado. Apagar lead é só da diretoria.
+- `tabela_precos` e `proposta`: preços vêm do banco (crm_catalog); proposta calcula parcelas e o desconto de pacote da tabela. Desconto extra e preço fora da tabela só a diretoria.
+- Skills `msy-marketing` e `msy-comercial`.
+- Banco: tabelas content_posts, crm_leads, crm_lead_notes e crm_catalog com RLS pela permissão nova.
+
 ## 0.13.1 — 2026-11-25
 
 - Supervisão segue a correção de segurança aplicada no banco: criar e mexer em lembretes e observações

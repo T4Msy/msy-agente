@@ -18,6 +18,7 @@ import { createComunicacao, comunicadosText, jornalText, justificationsText, COM
 import { createDiretoria, PERMISSOES, ACOES_MEMBRO, ACOES_COMISSAO, mesLabel } from '../lib/diretoria.mjs';
 import { createGestao, projectLabel, PROJ_STATUS, PROJ_TIPO, PRIORIDADES } from '../lib/gestao.mjs';
 import { createSupervisao, remindersText, casesText, LEMBRETE_CATEGORIAS, LEMBRETE_ACOES, CASO_ACOES, ALERTA_ACOES } from '../lib/supervisao.mjs';
+import { createMarketing, calendarText, leadsText, leadText, catalogText, proposalText, CANAIS, FORMATOS, POST_STATUS, CONTEUDO_ACOES, INTERESSES, ESTAGIOS, LEAD_ACOES, NOTA_TIPOS } from '../lib/marketing.mjs';
 import { createMembro, libraryText, profileText, swapsText, BIB_CATEGORIAS, SUG_CATEGORIAS, SUG_STATUS, EVENTO_ACOES } from '../lib/membro.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
@@ -30,7 +31,7 @@ const LOGIN_CMD = `node "${path.join(ROOT, 'bin', 'msy.mjs')}" login`;
 
 const BASE_INSTRUCTIONS = [
   'Agente MSY: conexão com o Portal de Membro da Masayoshi (portalmsy.site), com a conta do membro que está usando o agente. Fale em português do Brasil, direto e sem jargão.',
-  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), responder e registrar presença, publicar comunicados e escrever no Jornal MSY, acompanhar a Ordem (saúde dos membros, presenças, atividades, Huginn, painel e relatório semanal), controlar o Corvus, enviar avisos no WhatsApp pelo bot Corvus, e para',
+  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), responder e registrar presença, publicar comunicados e escrever no Jornal MSY, acompanhar a Ordem (saúde dos membros, presenças, atividades, Huginn, painel e relatório semanal), controlar o Corvus, enviar avisos no WhatsApp pelo bot Corvus, cuidar do marketing e comercial (calendário de conteúdo, leads, follow-up, tabela de preços e proposta), e para',
   'iniciar uma tarefa, atualizar o checklist e a nota de execução e mandar para revisão. As regras do portal valem:',
   'o agente só vê e muda o que o membro pode ver e mudar. Gestor pode aprovar tarefa ou pedir ajustes pelo agente (revisar_tarefa), com o banco conferindo que é gestor do projeto.',
   DATA_NOTICE,
@@ -38,7 +39,7 @@ const BASE_INSTRUCTIONS = [
   'Datas e horários do portal são de São Paulo; as ferramentas dizem "agora" nesse fuso.',
 ];
 const INSTRUCTIONS = [...BASE_INSTRUCTIONS, `Se uma ferramenta disser que não está conectado, rode no terminal: ${LOGIN_CMD} (abre o portal para o membro confirmar).`].join(' ');
-const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md, skill://msy-eventos/SKILL.md, skill://msy-comunicacao/SKILL.md, skill://msy-coordenacao/SKILL.md, skill://msy-diretoria/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
+const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md, skill://msy-eventos/SKILL.md, skill://msy-comunicacao/SKILL.md, skill://msy-coordenacao/SKILL.md, skill://msy-diretoria/SKILL.md, skill://msy-marketing/SKILL.md, skill://msy-comercial/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
 
 const idProp = (what) => ({ type: 'string', description: `${what} (UUID, como aparece nas listas)` });
 const READ = { readOnlyHint: true, openWorldHint: true };
@@ -64,6 +65,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const diretoria = createDiretoria(client);
   const membro = createMembro(client);
   const supervisao = createSupervisao(client);
+  const marketing = createMarketing(client);
   return [
     {
       name: 'guia',
@@ -912,6 +914,100 @@ export function buildTools(portal, client, { remote = false } = {}) {
         const o = await supervisao.archiveObservation(a);
         return `Observação "${o.title}" arquivada.`;
       },
+    },
+    {
+      name: 'calendario_conteudo',
+      description: 'Marketing e Comercial: o calendário de conteúdo da MSY (Instagram, TikTok, LinkedIn e outros): o que sai em cada dia, formato, pilar, status, quem cuida e métricas, mais as ideias e rascunhos sem data. Padrão: hoje até 21 dias. Só diretoria ou quem tem a permissão Marketing e Comercial.',
+      inputSchema: { type: 'object', properties: { de: { type: 'string', description: 'AAAA-MM-DD' }, ate: { type: 'string', description: 'AAAA-MM-DD' }, canal: { type: 'string', enum: CANAIS }, status: { type: 'string', enum: POST_STATUS }, limite: { type: 'integer', minimum: 1, maximum: 100 } } },
+      annotations: { title: 'Calendário de conteúdo', ...READ },
+      run: async (a) => calendarText(await marketing.calendar(a)),
+    },
+    {
+      name: 'gerir_conteudo',
+      description: 'Marketing e Comercial: cria um conteúdo no calendário (ideia, rascunho com legenda e roteiro, data, arte), edita, muda o status (aprovado, agendado, publicado com o link, cancelado), registra métricas (alcance, salvamentos, conversas, gasto_cents...) ou apaga (só quem criou ou a diretoria, repetindo o título). Não publica na rede: isso é feito no app da rede. Datas em horário de São Paulo. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          acao: { type: 'string', enum: CONTEUDO_ACOES }, id: idProp('Conteúdo (vazio para criar)'),
+          titulo: { type: 'string', maxLength: 160 }, canal: { type: 'string', enum: CANAIS }, formato: { type: 'string', enum: FORMATOS },
+          pilar: { type: 'string', maxLength: 60 }, legenda: { type: 'string', maxLength: 5000 }, roteiro: { type: 'string', maxLength: 10000 },
+          arte: { type: 'string', description: 'Link da arte (https://).' }, data: { type: 'string', description: 'AAAA-MM-DD ou AAAA-MM-DDTHH:MM; vazio tira a data.' },
+          status: { type: 'string', enum: POST_STATUS }, link_publicado: { type: 'string' }, dono: { type: 'string', description: 'Nome do membro que cuida.' },
+          metricas: { type: 'object', description: 'Ex.: {"alcance": 1200, "salvamentos": 30, "conversas": 4, "gasto_cents": 1200}' },
+          titulo_confirmacao: { type: 'string', description: 'Ao apagar: o título exato.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir conteúdo', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre ao membro o conteúdo ou a mudança e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await marketing.manageContent(a);
+        const t = r.post.title;
+        if (r.acao === 'criar') return `Conteúdo "${t}" criado no calendário (${r.post.channel}/${r.post.format}, ${r.post.status}${r.post.publish_at ? `, ${fmtDate(new Date(Date.parse(r.post.publish_at) - 3 * 3_600_000).toISOString().slice(0, 10))}` : ', sem data'}). id ${r.post.id}`;
+        if (r.acao === 'excluir') return `Conteúdo "${t}" apagado.`;
+        if (r.acao === 'status') return `Conteúdo "${t}" agora está ${r.post.status}.`;
+        if (r.acao === 'metricas') return `Métricas de "${t}" registradas.`;
+        return `Conteúdo "${t}" atualizado.`;
+      },
+    },
+    {
+      name: 'leads',
+      description: 'Marketing e Comercial: os leads da MSY (curso de IA, sites, automações, bots, sistemas). Sem id: a lista (padrão: os abertos), com filtros por estágio, interesse, dono, busca (nome, WhatsApp, @ ou empresa) e follow-up (hoje ou atrasados = a fila do dia). Com id: a ficha do lead com o histórico de contatos. Só diretoria ou quem tem a permissão Marketing e Comercial.',
+      inputSchema: { type: 'object', properties: { id: idProp('Lead'), estagio: { type: 'string', enum: ['abertos', 'todos', ...ESTAGIOS] }, interesse: { type: 'string', enum: INTERESSES }, busca: { type: 'string' }, followup: { type: 'string', enum: ['hoje', 'atrasados'] }, dono: { type: 'string' }, limite: { type: 'integer', minimum: 1, maximum: 100 } } },
+      annotations: { title: 'Leads', ...READ },
+      run: async (a) => (a.id ? leadText(await marketing.lead(a)) : leadsText(await marketing.leads(a))),
+    },
+    {
+      name: 'gerir_lead',
+      description: 'Marketing e Comercial: cria um lead (nome e pelo menos WhatsApp, Instagram ou e-mail; avisa se já existe), edita (estágio, interesse, dono, próximo follow-up, valor estimado, resumo; perdido pede motivo), registra no histórico (tipo nota, mensagem, ligação, reunião ou proposta: contato muda novo→contatado e proposta move para proposta) ou apaga (só diretoria, repetindo o nome). Não manda mensagem ao lead: para isso, o WhatsApp. Datas em horário de São Paulo. Chame com confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          acao: { type: 'string', enum: LEAD_ACOES }, id: idProp('Lead (vazio para criar)'),
+          nome: { type: 'string', maxLength: 120 }, whatsapp: { type: 'string', description: 'DDD + número.' }, instagram: { type: 'string' }, email: { type: 'string' },
+          empresa: { type: 'string' }, origem: { type: 'string', description: 'De onde veio: campanha, indicação, site...' },
+          interesse: { type: 'string', enum: INTERESSES }, estagio: { type: 'string', enum: ESTAGIOS }, dono: { type: 'string', description: 'Nome do membro que cuida (padrão: você).' },
+          proximo_followup: { type: 'string', description: 'AAAA-MM-DD ou AAAA-MM-DDTHH:MM' }, valor_estimado: { type: 'string', description: 'Em reais.' },
+          motivo_perda: { type: 'string', maxLength: 500 }, resumo: { type: 'string', maxLength: 4000 },
+          nota: { type: 'string', maxLength: 8000 }, tipo_nota: { type: 'string', enum: NOTA_TIPOS },
+          nome_confirmacao: { type: 'string', description: 'Ao apagar: o nome exato.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir lead', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Mostre ao membro o que vai ser gravado no lead e chame de novo com confirmado=true depois do sim.', isError: true };
+        const r = await marketing.manageLead(a);
+        if (r.acao === 'duplicado') return `Esse contato já é do lead "${r.lead.name}" (${r.lead.stage}, id ${r.lead.id}). Não criei outro: use acao=editar ou nota nele.`;
+        if (r.acao === 'criar') return `Lead "${r.lead.name}" criado (${r.lead.stage}, com ${r.lead.dono || 'você'}). id ${r.lead.id}`;
+        if (r.acao === 'excluir') return `Lead "${r.lead.name}" apagado, com o histórico.`;
+        if (r.acao === 'nota') return `Registrado no histórico de "${r.lead.name}" (${r.nota.kind}). Estágio: ${r.lead.stage}${r.lead.next_followup_at ? ` · próximo follow-up ${fmtDate(new Date(Date.parse(r.lead.next_followup_at) - 3 * 3_600_000).toISOString().slice(0, 10))}` : ''}.`;
+        return `Lead "${r.lead.name}" atualizado (${r.lead.stage}).`;
+      },
+    },
+    {
+      name: 'tabela_precos',
+      description: 'Marketing e Comercial: a tabela de preços da MSY (curso de IA, sites e serviços sob medida), com parcelas e regras de pacote. Itens sem preço são caso a caso com a diretoria. Use antes de falar preço com um lead.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { title: 'Tabela de preços', ...READ },
+      run: async () => catalogText(await marketing.catalog()),
+    },
+    {
+      name: 'proposta',
+      description: 'Marketing e Comercial: monta uma proposta com os itens da tabela de preços (quantidade, parcelas, desconto de pacote da tabela) e o total, pronta para revisar e mandar. Desconto extra (desconto_pct) e preço fora da tabela (valor no item) só a diretoria. Não grava nada: para guardar no lead, gerir_lead com tipo_nota=proposta.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          lead_id: idProp('Lead (opcional)'), cliente: { type: 'string', description: 'Nome do cliente, se não houver lead.' },
+          itens: { type: 'array', minItems: 1, maxItems: 20, items: { type: 'object', properties: { item: { type: 'string', description: 'Nome do item da tabela.' }, quantidade: { type: 'integer', minimum: 1 }, valor: { type: 'string', description: 'Só diretoria: preço em reais fora da tabela.' } }, required: ['item'] } },
+          desconto_pct: { type: 'number', description: 'Só diretoria.' }, observacoes: { type: 'string', maxLength: 2000 },
+        },
+        required: ['itens'],
+      },
+      annotations: { title: 'Proposta comercial', ...READ },
+      run: async (a) => proposalText(await marketing.proposal(a)),
     },
     {
       name: 'membros',
