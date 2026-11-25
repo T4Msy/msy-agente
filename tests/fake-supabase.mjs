@@ -113,6 +113,11 @@ export function startFakeSupabase({ today } = {}) {
           t.status = 'em_andamento'; t.started_at = new Date().toISOString();
           return send(200, null);
         }
+        if (fn === 'register_agent_session') {
+          if (state.failAgentMark) return send(500, { message: 'falha' });
+          state.agentMarks = (state.agentMarks || 0) + 1;
+          return send(200, null);
+        }
         if (fn === 'notify_project') return send(200, (body.p_user_ids || []).length);
         if (fn === 'task_request_review') { t.status = 'em_revisao'; t.revisions_count = (t.revisions_count || 0) + 1; return send(200, null); }
         return send(404, { message: 'função desconhecida' });

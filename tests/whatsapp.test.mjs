@@ -82,3 +82,27 @@ test('redirecionamento portalmsy.site → www mantém o login; para outro site, 
   await assert.rejects(evil.portalApi('GET', '/api/whatsapp'), /outro endereço/);
   fs.rmSync(h, { recursive: true, force: true });
 });
+
+test('envio marca a sessão como do agente antes, uma vez por sessão, sem reconectar', async () => {
+  const w = createWhatsapp(client);
+  const marks = fake.state.agentMarks || 0;
+  const regs = fake.state.rpc.filter((x) => x.fn === 'register_agent_session').length;
+  const c2 = createClient({ env: { MSY_HOME: home, MSY_SUPABASE_URL: fake.url, MSY_SUPABASE_ANON_KEY: 'anon-teste', MSY_PORTAL_URL: fake.url } });
+  const w2 = createWhatsapp(c2);
+  await w2.send({ grupo: GRUPO, mensagem: 'um' });
+  await w2.send({ grupo: GRUPO, mensagem: 'dois' });
+  assert.equal(fake.state.agentMarks, marks + 1);
+  const reg = fake.state.rpc.filter((x) => x.fn === 'register_agent_session');
+  assert.equal(reg.length, regs + 1);
+  assert.ok(w);
+});
+
+test('se a marca do agente falhar, a mensagem não sai', async () => {
+  fake.state.failAgentMark = true;
+  const c3 = createClient({ env: { MSY_HOME: home, MSY_SUPABASE_URL: fake.url, MSY_SUPABASE_ANON_KEY: 'anon-teste', MSY_PORTAL_URL: fake.url } });
+  const n = fake.state.whatsapp.length;
+  try {
+    await assert.rejects(createWhatsapp(c3).send({ grupo: GRUPO, mensagem: 'oi' }), /não foi enviada/);
+    assert.equal(fake.state.whatsapp.length, n);
+  } finally { fake.state.failAgentMark = false; }
+});

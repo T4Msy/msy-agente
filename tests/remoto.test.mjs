@@ -109,8 +109,11 @@ test('fluxo completo: login no portal → código → token → MCP com a conta 
   assert.equal(batch.length, 2);
 
   // renovação: novo acesso; o refresh antigo deixa de valer
+  const marksBefore = fake.state.agentMarks || 0;
   const ref = await (await fetch(`${base}/token`, form({ grant_type: 'refresh_token', refresh_token: tok.refresh_token, client_id: client.client_id }))).json();
   assert.ok(ref.access_token && ref.access_token !== tok.access_token);
+  assert.equal(fake.state.agentMarks, marksBefore + 1, 'a renovação marca a sessão como do agente (sem reconectar)');
+  assert.equal(fake.state.rpc.at(-1).body.p_app, 'conector remoto');
   const old = await (await fetch(`${base}/token`, form({ grant_type: 'refresh_token', refresh_token: tok.refresh_token }))).json();
   assert.equal(old.error, 'invalid_grant');
 
