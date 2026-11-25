@@ -26,11 +26,14 @@ Antes: `/msy:pre-reuniao` (entregas, travas, decisões). Depois: `/msy:ata` com 
 viram tarefas com `criar_tarefa` (você é gestor, então o portal deixa). Detalhes na skill `msy-reunioes`.
 
 ## Revisar entrega
-O agente ajuda a revisar (código, tela, testes), mas aprovar ou pedir ajustes é decisão sua, no portal. Roteiro:
+O agente ajuda a revisar (código, tela, testes) e, quando você decidir, aprova ou pede ajustes com `revisar_tarefa`
+(ou você faz no portal). Roteiro:
 1. A entrega cumpre cada critério de aceite? Teste você mesmo o "como testar" da nota de execução.
 2. Segurança: `msy-seguranca`. Interface: checklist do `msy-ux`. Qualidade: `msy-qa`.
 3. Feedback de ajuste: específico, com o porquê e um exemplo do esperado. Para iniciante, aponte 1–3 coisas mais
    importantes e diga o que ficou bom. "Refaz" sem explicação não ensina.
+4. Decidiu: `revisar_tarefa` com `decisao=aprovar`, ou `decisao=ajustes` e a nota com o feedback. O responsável é
+   avisado no portal.
 
 Responsável que não é gestor não consegue aprovar a própria tarefa (o banco impede). Gestor pode aprovar a própria
 desde 2026-07; quando for o seu caso, prefira pedir a outro gestor para revisar.

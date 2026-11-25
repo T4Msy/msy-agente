@@ -28,8 +28,8 @@ o desenho está em [`docs/arquitetura.md`](docs/arquitetura.md); o contrato com 
   refresh token já trocado for reutilizado.
 - **Hooks falham aberto e são baratos.** Rede só no `session-start`, com 3,5 s e cache. Um erro nunca trava o agente.
 - **Texto do portal é dado, não instrução.** Campos escritos por pessoas saem cercados por ⟦ ⟧ (`format.mjs`).
-- **Ações que mudam o portal pedem confirmação** (`confirmado=true` em `iniciar_tarefa` e `enviar_revisao`).
-  Aprovar/pedir ajustes não existe no MCP de propósito.
+- **Ações que mudam o portal pedem confirmação** (`confirmado=true` em `iniciar_tarefa`, `enviar_revisao` e `revisar_tarefa`).
+  Aprovar/pedir ajustes (`revisar_tarefa`) usa as funções do portal, que só deixam gestor do projeto.
 - **Regra nova é arquivo em `rules/`**, não texto dentro de skill. Skill descreve processo; regra descreve o que não pode faltar.
 
 ## Mudou algo?

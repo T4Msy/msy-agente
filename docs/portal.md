@@ -40,8 +40,7 @@ Projeto Supabase `lldzgkxpoyqauxdcjyaw` · repositório `T4Msy/Portal-Membro-Msy
 | Ata | `POST meeting_minutes` (+ `meeting_minute_viewers`) | só quem tem `gerenciar_reunioes` |
 | Mensagem no WhatsApp | `GET/POST {portal}/api/whatsapp` (Vercel → bot Corvus) com o JWT do membro | quem está em `bot_settings.allowed_senders`; envio registrado em `bot_messages` |
 | Criar tarefa | `POST project_tasks` (+ checklist, histórico, `rpc/notify_project`) | só gestor do projeto (`can_manage_project`) |
-
-Aprovar (`task_approve`) e pedir ajustes (`task_request_changes`) **não** são expostos.
+| Aprovar / pedir ajustes | `rpc/task_approve`, `rpc/task_request_changes` (+ `rpc/notify_project` ao responsável) | só gestor do projeto (`can_manage_project`); quem pede ajustes não pode ser o responsável |
 
 ## Verificar o schema
 

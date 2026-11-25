@@ -14,7 +14,7 @@ de verdade. Ferramentas do `msy-portal`: `comunicados`, `publicar_comunicado`, `
 
 Tudo desta skill é para dentro da Ordem. Nada de comunicado, Jornal, presença, falta ou justificativa vai para
 Instagram, LinkedIn, TikTok, site ou qualquer lugar público, nem como "bastidor". Nome de membro, motivo de falta e
-número de presença nunca saem do portal. Se o membro quiser transformar algo interno em post, isso é outro trabalho
+número de presença não vão para canal público (no WhatsApp da Ordem, sim, quando o membro pedir). Se o membro quiser transformar algo interno em post, isso é outro trabalho
 (Marketing e Comercial), com texto novo e sem dado de pessoas.
 
 ## 1. Qual canal

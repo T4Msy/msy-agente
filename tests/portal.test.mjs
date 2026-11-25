@@ -97,6 +97,26 @@ test('erro de regra do portal chega em português', async () => {
   await assert.rejects(portal.startTask(TAREFA), /não pode ser iniciada/); // já está em revisão
 });
 
+test('revisar tarefa: só gestor (o banco decide), ajustes pedem nota, aprovação avisa o responsável', async () => {
+  const { portal } = await loggedIn();
+  const PALETA = '20000000-0000-4000-8000-000000000002';
+  await assert.rejects(portal.reviewTask(PALETA, { decisao: 'talvez' }), /aprovar/);
+  await assert.rejects(portal.reviewTask(PALETA, { decisao: 'ajustes', nota: '' }), /o que precisa mudar/);
+  fake.state.manager = false;
+  await assert.rejects(portal.reviewTask(PALETA, { decisao: 'aprovar' }), /gestor/);
+  fake.state.manager = true;
+  const before = fake.state.rpc.length;
+  const t = await portal.reviewTask(PALETA, { decisao: 'aprovar' });
+  assert.equal(t.status, 'concluida');
+  const calls = fake.state.rpc.slice(before);
+  assert.deepEqual(calls.map((c) => c.fn), ['task_approve', 'notify_project']);
+  assert.deepEqual(calls[1].body.p_user_ids, [MEMBRO.id]);
+  assert.match(calls[1].body.p_message, /aprovada: "Revisar paleta"/);
+  await assert.rejects(portal.reviewTask(PALETA, { decisao: 'aprovar' }), /não está em revisão/);
+  assert.ok(fake.state.inserts.some((i) => i.route === 'project_history' && i.body.action === 'agente_tarefa_aprovada'));
+  fake.state.manager = false;
+});
+
 test('agenda junta tarefa com prazo, atividade e evento, e vira .ics', async () => {
   const { portal } = await loggedIn();
   const a = await portal.agenda(14);
