@@ -12,6 +12,8 @@ import fs from 'node:fs';
 import { createReunioes, meetingsText, briefFacts } from '../lib/reunioes.mjs';
 import { parseTranscript, transcriptText, transcriptStats } from '../lib/transcricao.mjs';
 import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
+import { createEventos, eventsText, eventDetailText, historyText, EVENT_TYPES } from '../lib/eventos.mjs';
+import { fmtDate } from '../lib/format.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
 import { SKILLS_EXTENSION, skillsList, skillsGet, isSkillUri, readSkillResource, readSkillDirectory, skillResourcesForList } from '../lib/skills-mcp.mjs';
 
@@ -21,7 +23,7 @@ const LOGIN_CMD = `node "${path.join(ROOT, 'bin', 'msy.mjs')}" login`;
 
 const BASE_INSTRUCTIONS = [
   'Agente MSY: conexão com o Portal de Membro da Masayoshi (portalmsy.site), com a conta do membro que está usando o agente. Fale em português do Brasil, direto e sem jargão.',
-  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), enviar avisos no WhatsApp pelo bot Corvus, e para',
+  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), enviar avisos no WhatsApp pelo bot Corvus, e para',
   'iniciar uma tarefa, atualizar o checklist e a nota de execução e mandar para revisão. As regras do portal valem:',
   'o agente só vê e muda o que o membro pode ver e mudar. Aprovar tarefa é sempre decisão humana do gestor, no portal.',
   DATA_NOTICE,
@@ -29,7 +31,7 @@ const BASE_INSTRUCTIONS = [
   'Datas e horários do portal são de São Paulo; as ferramentas dizem "agora" nesse fuso.',
 ];
 const INSTRUCTIONS = [...BASE_INSTRUCTIONS, `Se uma ferramenta disser que não está conectado, rode no terminal: ${LOGIN_CMD} (abre o portal para o membro confirmar).`].join(' ');
-const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
+const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md, skill://msy-eventos/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
 
 const idProp = (what) => ({ type: 'string', description: `${what} (UUID, como aparece nas listas)` });
 const READ = { readOnlyHint: true, openWorldHint: true };
@@ -47,6 +49,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const url = client.config.portalUrl;
   const reunioes = createReunioes(client);
   const whatsapp = createWhatsapp(client);
+  const eventos = createEventos(client);
   return [
     {
       name: 'guia',
@@ -203,6 +206,107 @@ export function buildTools(portal, client, { remote = false } = {}) {
         if (a.confirmado !== true) return { text: 'Não criei: mostre a tarefa ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
         const t = await reunioes.createTask({ projectId: a.project_id, titulo: a.titulo, descricao: a.descricao, responsavel: a.responsavel, prazo: a.prazo, prioridade: a.prioridade, checklist: a.checklist || [], origem: a.origem });
         return `Tarefa criada: "${t.title}" (id ${t.id})${a.responsavel ? '; o responsável foi notificado no portal' : ''}.`;
+      },
+    },
+    {
+      name: 'eventos',
+      description: 'Eventos da Ordem no portal (sociais, reuniões, workshops): próximos (padrão), passados ou todos, com tipo, status e id. Use para ver o calendário de eventos e achar o id para evento, editar_evento e relatorio_evento.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          periodo: { type: 'string', enum: ['proximos', 'passados', 'todos'] },
+          dias: { type: 'integer', minimum: 1, maximum: 365, description: 'Janela em dias (padrão 60).' },
+          tipo: { type: 'string', description: `ex.: ${EVENT_TYPES.join(', ')}` },
+          busca: { type: 'string', description: 'Parte do título.' },
+          limite: { type: 'integer', minimum: 1, maximum: 50 },
+        },
+      },
+      annotations: { title: 'Eventos', ...READ },
+      run: async (a) => eventsText(await eventos.list(a), { periodo: a.periodo || 'proximos' }),
+    },
+    {
+      name: 'evento',
+      description: 'Ficha de um evento: dados, quem respondeu que vai ou não, quem esteve presente, justificativas e o relatório salvo (briefing e retrospectiva).',
+      inputSchema: { type: 'object', properties: { event_id: idProp('Evento') }, required: ['event_id'] },
+      annotations: { title: 'Ficha do evento', ...READ },
+      run: async (a) => eventDetailText(await eventos.detail(a.event_id)),
+    },
+    {
+      name: 'historico_eventos',
+      description: 'Eventos passados parecidos (por tipo e palavras do título), com presença de cada um (confirmou x foi, quem confirmou e faltou), cancelamentos e o que os relatórios registraram. Use antes de montar um briefing: o histórico diz que público esperar e o que já deu errado.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          tipo: { type: 'string' },
+          titulo: { type: 'string', description: 'Título ou tema do evento que está sendo planejado.' },
+          limite: { type: 'integer', minimum: 1, maximum: 20 },
+        },
+      },
+      annotations: { title: 'Histórico de eventos', ...READ },
+      run: async (a) => historyText(await eventos.history(a)),
+    },
+    {
+      name: 'criar_evento',
+      description: 'Cria um evento no portal (aparece para a Ordem em Eventos). Só quem pode criar eventos no portal consegue. Crie quando o membro pedir; depois mostre o que foi criado. Avisar a Ordem é outro passo (enviar_whatsapp).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          titulo: { type: 'string', maxLength: 120 },
+          data: { type: 'string', description: 'AAAA-MM-DD' },
+          hora: { type: 'string', description: 'HH:MM, horário de São Paulo (padrão 19:00)' },
+          tipo: { type: 'string', description: `ex.: ${EVENT_TYPES.join(', ')} (padrão Evento Social)` },
+          descricao: { type: 'string', maxLength: 4000 },
+          obrigatorio: { type: 'boolean' },
+          privado: { type: 'boolean' },
+        },
+        required: ['titulo', 'data'],
+      },
+      annotations: { title: 'Criar evento', ...WRITE },
+      run: async (a) => {
+        const e = await eventos.create(a);
+        return `Evento criado no portal: ${e.title} em ${fmtDate(e.event_date, e.event_time)} (${e.type}) · evento ${e.id}. Está em ${url}/eventos.html.`;
+      },
+    },
+    {
+      name: 'editar_evento',
+      description: 'Muda título, data, hora, tipo, descrição, obrigatório ou privado de um evento. Só quem pode editar eventos no portal consegue. Cancelar e concluir continuam no portal.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          event_id: idProp('Evento'),
+          titulo: { type: 'string', maxLength: 120 }, data: { type: 'string' }, hora: { type: 'string' }, tipo: { type: 'string' },
+          descricao: { type: 'string', maxLength: 4000 }, obrigatorio: { type: 'boolean' }, privado: { type: 'boolean' },
+        },
+        required: ['event_id'],
+      },
+      annotations: { title: 'Editar evento', ...WRITE },
+      run: async (a) => {
+        const { event_id: id, ...rest } = a;
+        const e = await eventos.update(id, rest);
+        return `Evento atualizado: ${e.title} em ${fmtDate(e.event_date, e.event_time)}.`;
+      },
+    },
+    {
+      name: 'relatorio_evento',
+      description: 'Salva o briefing (antes) e/ou a retrospectiva (depois) de um evento no portal, para o histórico da Ordem: briefing, retrospectiva, funcionou, nao_funcionou, licoes e numeros (objeto livre, ex.: {"custo": 40, "convidados": 3}). Manda só os campos que mudam; os outros ficam como estão. Formatos na skill msy-eventos.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          event_id: idProp('Evento'),
+          briefing: { type: 'string', maxLength: 8000 },
+          retrospectiva: { type: 'string', maxLength: 8000 },
+          funcionou: { type: 'string', maxLength: 8000 },
+          nao_funcionou: { type: 'string', maxLength: 8000 },
+          licoes: { type: 'string', maxLength: 8000 },
+          numeros: { type: 'object' },
+        },
+        required: ['event_id'],
+      },
+      annotations: { title: 'Briefing e retrospectiva do evento', ...WRITE },
+      run: async (a) => {
+        const { event_id: id, ...rest } = a;
+        const r = await eventos.saveReport(id, rest);
+        return `Relatório de "${r.evento.title}" salvo no portal (${r.campos.join(', ')}).`;
       },
     },
     {

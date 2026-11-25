@@ -1,6 +1,6 @@
 {
   "name": "msy",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Agente MSY: conecta o Claude Code/Codex ao Portal de Membro da Masayoshi com a conta do membro (tarefas, agenda, projetos), traz o contexto da Masayoshi e skills por papel (UX/UI, front, back, QA, gestor), ensina quem está começando e protege contra erros de segurança e de interface.",
   "author": {
     "name": "Masayoshi"
