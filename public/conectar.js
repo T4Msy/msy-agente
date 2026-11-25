@@ -38,8 +38,8 @@
     })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.refresh_token) throw new Error(r.status === 400 ? 'E-mail ou senha inválidos.' : 'Não foi possível entrar agora.'); return j; }); })
       .then(function (s) {
-        // Fase 0: marca esta sessão como "do agente" no portal. Daí em diante a ponte /api/whatsapp
-        // recusa aprovar envios vindos dela: quem aprova é a pessoa, no portal pelo navegador.
+        // Fase 0: marca esta sessão como "do agente" no portal. A ponte /api/whatsapp aplica a política
+        // da pessoa aos envios dela e registra como via agente.
         return fetch(info.supabaseUrl + '/rest/v1/rpc/register_agent_session', {
           method: 'POST',
           headers: { apikey: info.anonKey, authorization: 'Bearer ' + s.access_token, 'content-type': 'application/json' },
