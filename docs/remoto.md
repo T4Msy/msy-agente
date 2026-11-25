@@ -15,6 +15,13 @@ Endereço do conector: **`https://msy-agente.vercel.app/mcp`**. Cada push na `ma
 Nada fica guardado no servidor: registro do app, pedido, código e refresh token são cifrados com AES-256-GCM e a
 chave `MSY_OAUTH_SECRET`. Trocar a chave desconecta todo mundo (cada um conecta de novo).
 
+## Skills pelo MCP
+
+O servidor declara a extensão `io.modelcontextprotocol/skills` (com `directoryRead`) no `server/discover` da revisão
+2026-07-28 e publica cada skill como `skill://<nome>/SKILL.md`, com as referências em `skill://<nome>/referencias/…`.
+O Claude e o Claude Code carregam a skill só quando o assunto pede. Clientes antigos (`initialize`) continuam
+funcionando e usam a ferramenta `guia` para o mesmo conteúdo.
+
 ## Variáveis na Vercel
 
 | Variável | Obrigatória | Para quê |

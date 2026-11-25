@@ -13,6 +13,7 @@ import { createReunioes, meetingsText, briefFacts } from '../lib/reunioes.mjs';
 import { parseTranscript, transcriptText, transcriptStats } from '../lib/transcricao.mjs';
 import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
+import { SKILLS_EXTENSION, skillsList, skillsGet, isSkillUri, readSkillResource, readSkillDirectory, skillResourcesForList } from '../lib/skills-mcp.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { VERSION } from '../lib/version.mjs';
@@ -28,7 +29,7 @@ const BASE_INSTRUCTIONS = [
   'Datas e horários do portal são de São Paulo; as ferramentas dizem "agora" nesse fuso.',
 ];
 const INSTRUCTIONS = [...BASE_INSTRUCTIONS, `Se uma ferramenta disser que não está conectado, rode no terminal: ${LOGIN_CMD} (abre o portal para o membro confirmar).`].join(' ');
-const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
+const REMOTE_INSTRUCTIONS = [...BASE_INSTRUCTIONS, 'Este servidor também publica as skills da Masayoshi (skill://msy-contexto/SKILL.md, skill://msy-tarefas/SKILL.md, skill://msy-ux/SKILL.md, skill://msy-reunioes/SKILL.md e outras em skills/list): carregue a do assunto quando o app suportar skills; senão, use a ferramenta guia.', 'Se a sessão vencer, o app renova sozinho; se não conseguir, peça ao membro para reconectar o conector "Agente MSY".'].join(' ');
 
 const idProp = (what) => ({ type: 'string', description: `${what} (UUID, como aparece nas listas)` });
 const READ = { readOnlyHint: true, openWorldHint: true };
@@ -308,32 +309,56 @@ function errorText(err, remote = false) {
   return err?.message || String(err);
 }
 
+// Revisões do protocolo atendidas. 2026-07-28 ("moderna") não tem handshake: cada requisição traz a versão em
+// params._meta e o cliente descobre o servidor por server/discover. As anteriores usam initialize.
+export const MODERN_VERSIONS = ['2026-07-28'];
+export const LEGACY_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
+const META_VERSION = 'io.modelcontextprotocol/protocolVersion';
+const META_CLIENT_CAPS = 'io.modelcontextprotocol/clientCapabilities';
+const META_SERVER_INFO = 'io.modelcontextprotocol/serverInfo';
+const LIST_CACHE = { ttlMs: 300_000, cacheScope: 'public' };
+const rpcError = (code, message, extra = {}) => Object.assign(new Error(message), { rpcCode: code, ...extra });
+
 export function createServer({ client = createClient(), portal, remote = false } = {}) {
   const p = portal || createPortal(client);
   const tools = buildTools(p, client, { remote });
   const byName = new Map(tools.map((t) => [t.name, t]));
+  const serverInfo = { name: 'msy-portal', title: 'Agente MSY', version: VERSION };
+  // Skills via MCP só no remoto: no Claude Code com o plugin, as skills já vêm do plugin (evita duplicar).
+  const capabilities = {
+    tools: { listChanged: false },
+    prompts: { listChanged: false },
+    ...(remote ? { resources: {}, extensions: { [SKILLS_EXTENSION]: { directoryRead: true } } } : {}),
+  };
+  const instructions = remote ? REMOTE_INSTRUCTIONS : INSTRUCTIONS;
+  const needRemote = (method) => { if (!remote) throw rpcError(-32601, `Método não suportado: ${method}`); };
 
-  async function handle(msg) {
-    const { id, method, params } = msg;
-    const isRequest = id !== undefined && id !== null;
+  async function dispatch(method, params, isRequest) {
+    if (method === 'server/discover') {
+      return { supportedVersions: [...MODERN_VERSIONS, ...LEGACY_VERSIONS], capabilities, instructions, _meta: { [META_SERVER_INFO]: serverInfo }, ttlMs: 3_600_000, cacheScope: 'public' };
+    }
     if (method === 'initialize') {
-      return {
-        protocolVersion: params?.protocolVersion || '2025-06-18',
-        capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
-        serverInfo: { name: 'msy-portal', version: VERSION },
-        instructions: remote ? REMOTE_INSTRUCTIONS : INSTRUCTIONS,
-      };
+      const asked = params?.protocolVersion;
+      return { protocolVersion: LEGACY_VERSIONS.includes(asked) ? asked : LEGACY_VERSIONS[0], capabilities, serverInfo, instructions };
     }
     if (method === 'ping') return {};
-    if (method === 'tools/list') {
-      return { tools: tools.map(({ run, ...t }) => t) };
-    }
+    if (method === 'tools/list') return { tools: tools.map(({ run, ...t }) => t) };
     if (method === 'prompts/list') return { prompts: listPrompts({ remote }) };
     if (method === 'prompts/get') {
       const pr = getPrompt(params?.name, params?.arguments || {}, { remote });
-      if (!pr) throw Object.assign(new Error(`Prompt desconhecido: ${params?.name}`), { rpcCode: -32602 });
+      if (!pr) throw rpcError(-32602, `Prompt desconhecido: ${params?.name}`);
       return pr;
     }
+    if (method === 'skills/list') { needRemote(method); return skillsList(); }
+    if (method === 'skills/get') { needRemote(method); return skillsGet(params?.uri); }
+    if (method === 'resources/list') { needRemote(method); return { resources: skillResourcesForList() }; }
+    if (method === 'resources/templates/list') { needRemote(method); return { resourceTemplates: [] }; }
+    if (method === 'resources/read') {
+      needRemote(method);
+      if (!isSkillUri(params?.uri)) throw rpcError(-32602, `Recurso não encontrado: ${params?.uri}`);
+      return readSkillResource(params.uri);
+    }
+    if (method === 'resources/directory/read') { needRemote(method); return readSkillDirectory(params?.uri); }
     if (method === 'tools/call') {
       const tool = byName.get(params?.name);
       if (!tool) return { content: [{ type: 'text', text: `Ferramenta desconhecida: ${params?.name}` }], isError: true };
@@ -347,7 +372,28 @@ export function createServer({ client = createClient(), portal, remote = false }
       }
     }
     if (!isRequest) return undefined; // notificações (ex.: notifications/initialized) não têm resposta
-    throw Object.assign(new Error(`Método não suportado: ${method}`), { rpcCode: -32601 });
+    throw rpcError(-32601, `Método não suportado: ${method}`);
+  }
+
+  async function handle(msg) {
+    const { id, method, params } = msg;
+    const isRequest = id !== undefined && id !== null;
+    const meta = params?._meta || {};
+    const version = meta[META_VERSION];
+    const modern = isRequest && version !== undefined && method !== 'initialize';
+    if (modern) {
+      if (![...MODERN_VERSIONS, ...LEGACY_VERSIONS].includes(version)) {
+        throw rpcError(-32022, `Versão do protocolo não suportada: ${version}`, { data: { supported: [...MODERN_VERSIONS, ...LEGACY_VERSIONS], requested: version }, httpStatus: 400 });
+      }
+      if (MODERN_VERSIONS.includes(version) && !meta[META_CLIENT_CAPS]) {
+        throw rpcError(-32602, `Requisição sem _meta["${META_CLIENT_CAPS}"].`, { httpStatus: 400 });
+      }
+    }
+    const result = await dispatch(method, params, isRequest);
+    if (!modern || result === undefined) return result;
+    const out = { resultType: 'complete', ...result, _meta: { ...(result._meta || {}), [META_SERVER_INFO]: serverInfo } };
+    if (['tools/list', 'prompts/list', 'resources/list', 'resources/templates/list'].includes(method)) Object.assign(out, { ...LIST_CACHE, ...result });
+    return out;
   }
 
   return { handle, tools };
@@ -365,7 +411,7 @@ export function serveStdio(server, { input = process.stdin, output = process.std
       const result = await server.handle(msg);
       if (isRequest) send({ jsonrpc: '2.0', id: msg.id, result: result ?? {} });
     } catch (err) {
-      if (isRequest) send({ jsonrpc: '2.0', id: msg.id, error: { code: err.rpcCode || -32603, message: err.message } });
+      if (isRequest) send({ jsonrpc: '2.0', id: msg.id, error: { code: err.rpcCode || -32603, message: err.message, ...(err.data ? { data: err.data } : {}) } });
     }
   });
   return rl;

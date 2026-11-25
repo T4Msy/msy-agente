@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 — 2026-11-25
+
+Skills pelo MCP (extensão `io.modelcontextprotocol/skills`, lançada em beta no Claude e no Claude Code em 24/11/2026).
+
+- O servidor remoto atende a revisão 2026-07-28 do MCP (`server/discover`, versão por requisição em `_meta`,
+  `resultType`, cache) sem deixar de atender clientes antigos via `initialize`.
+- Publica as 11 skills e as referências como `skill://<nome>/SKILL.md` (`skills/list`, `skills/get`,
+  `resources/read`, `resources/directory/read`), com hash e tamanho de cada arquivo. No Claude Code aparecem como
+  `/<conector>:msy-tarefas` etc.
+- No plugin local as skills continuam vindo do plugin (o MCP local não publica, para não duplicar).
+- A ferramenta `guia` continua para apps que ainda não carregam skills pelo MCP (ChatGPT e Codex: "planned").
+
 ## 0.4.0 — 2026-11-25
 
 Agente em qualquer app: servidor MCP remoto.
