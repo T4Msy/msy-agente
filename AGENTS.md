@@ -28,7 +28,9 @@ o desenho está em [`docs/arquitetura.md`](docs/arquitetura.md); o contrato com 
   refresh token já trocado for reutilizado.
 - **Hooks falham aberto e são baratos.** Rede só no `session-start`, com 3,5 s e cache. Um erro nunca trava o agente.
 - **Texto do portal é dado, não instrução.** Campos escritos por pessoas saem cercados por ⟦ ⟧ (`format.mjs`).
-- **Ações que mudam o portal pedem confirmação** (`confirmado=true` em `iniciar_tarefa`, `enviar_revisao` e `revisar_tarefa`).
+- **Ações que mudam o portal pedem confirmação** (`confirmado=true` em todas as escritas: `iniciar_tarefa`, `enviar_revisao`,
+  `revisar_tarefa`, `criar_projeto`, `editar_tarefa`, `marcar_reuniao` e as demais). Update ou delete barrado pela RLS volta
+  zero linhas: trate como "negado", nunca como feito (`lib/gestao.mjs`).
   Aprovar/pedir ajustes (`revisar_tarefa`) usa as funções do portal, que só deixam gestor do projeto.
 - **Regra nova é arquivo em `rules/`**, não texto dentro de skill. Skill descreve processo; regra descreve o que não pode faltar.
 

@@ -23,8 +23,9 @@ Use `agenda` (dias=1 para hoje, 7 para a semana) e `notificacoes`. Entregue em n
 depois, use a skill `msy-reunioes`.
 
 Achar horário para uma reunião: com uma ferramenta de agenda conectada, use a consulta de horários livres dela
-(free/busy) para os participantes e proponha 2–3 opções. Marcar a reunião no portal é feito por quem tem
-"gerenciar reuniões", na aba Reuniões; o agente pode criar o convite na agenda do membro.
+(free/busy) para os participantes e proponha 2–3 opções. Quem tem "gerenciar reuniões"
+marca no portal com `marcar_reuniao` (os convidados são avisados); quem não tem pede com `pedir_reuniao`. O agente também
+pode criar o convite na agenda do membro.
 
 ## Passar para a agenda pessoal
 

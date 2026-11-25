@@ -17,6 +17,16 @@ Uma tarefa boa faz o membro iniciante começar sem precisar perguntar o óbvio:
 Preencha também a documentação do projeto no portal (contexto, requisitos, regras de negócio, arquitetura): ela entra
 no briefing de todas as tarefas.
 
+## Administrar o projeto pelo agente
+Tudo o que o gestor faz em projetos.html também dá pelo agente, sempre mostrando a mudança e com `confirmado=true` depois do sim:
+- `criar_projeto` (pede a permissão de criar ou gerenciar projetos) e `editar_projeto` (textos, tipo, prioridade, status, datas,
+  responsável; só muda o que for enviado).
+- `participantes_projeto`: adicionar (a pessoa é avisada), remover, trocar funções, dar ou tirar gestão. Membro pelo nome.
+- `editar_tarefa`: título, descrição, prazo e hora, prioridade, categoria, observações, responsável (o novo é avisado).
+  O responsável que não é gestor só mexe no checklist e na nota de execução: o banco recusa o resto.
+- `excluir_tarefa` e `excluir_projeto` não têm volta. O projeto pede o nome exato em `nome_confirmacao` e leva junto
+  tarefas, participantes e histórico: confirme isso com a pessoa antes.
+
 ## Acompanhar
 - `fila_revisao` mostra o que espera você. Revisão parada trava o membro: priorize.
 - `minhas_tarefas`/`projeto` para ver andamento; atraso → conversa cedo, não cobrança no fim.

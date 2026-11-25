@@ -6,7 +6,17 @@ description: Reuniões da Masayoshi do começo ao fim — resumo pré-reunião (
 # Reuniões
 
 Objetivo: a reunião começa no que importa e termina com decisões registradas e donos para cada encaminhamento.
-Ferramentas do `msy-portal`: `reunioes`, `preparar_reuniao`, `ler_transcricao`, `registrar_ata`, `criar_tarefa`.
+Ferramentas do `msy-portal`: `reunioes`, `preparar_reuniao`, `ler_transcricao`, `registrar_ata`, `criar_tarefa`,
+`marcar_reuniao`, `gerenciar_reuniao`, `pedir_reuniao`, `responder_pedido_reuniao`.
+
+## Marcar e administrar
+- Qualquer membro pede reunião à diretoria com `pedir_reuniao` (motivo, data sugerida).
+- Quem tem "gerenciar reuniões" (ou a diretoria) marca com `marcar_reuniao`: título, data, hora e convidados pelo nome.
+  Os convidados são avisados no portal. Se veio de um pedido, passe `pedido_id` e o pedido fica aprovado.
+- `gerenciar_reuniao`: concluir ou cancelar (avisa os convidados), convidar mais gente ou excluir.
+- `responder_pedido_reuniao`: recusar ou excluir um pedido. Os pedidos pendentes aparecem em `preparar_reuniao`.
+- Mostre a reunião e a lista de convidados antes e só envie `confirmado=true` depois do sim. Para escolher horário,
+  use a agenda conectada do membro (skill `msy-rotina`).
 
 ## 1. Antes: resumo pré-reunião
 

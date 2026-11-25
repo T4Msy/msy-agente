@@ -17,7 +17,8 @@ e quem está pendente no mês), `comissoes` (`todas=true` para quem administra) 
 Ainda no portal, até o agente ganhar essas ações: aprovar, desativar ou mudar cargo de membro, permissões,
 registrar pagamento de mensalidade e mexer no comissionamento. Avisos sobre qualquer um desses assuntos
 (inclusive cobrança de mensalidade) podem ir pelo WhatsApp quando o membro pedir. Aprovar tarefa:
-`revisar_tarefa`, para gestor do projeto.
+`revisar_tarefa`, para gestor do projeto. Projetos e reuniões também vão pelo agente: `criar_projeto`,
+`editar_projeto`, `participantes_projeto`, `marcar_reuniao`, `gerenciar_reuniao` e `responder_pedido_reuniao`.
 
 ## 1. Painel
 

@@ -15,6 +15,7 @@ import { createWhatsapp, WHATSAPP_MAX } from '../lib/whatsapp.mjs';
 import { createEventos, eventsText, eventDetailText, historyText, EVENT_TYPES } from '../lib/eventos.mjs';
 import { fmtDate } from '../lib/format.mjs';
 import { createComunicacao, comunicadosText, jornalText, justificationsText, COMUNICADO_CATEGORIAS } from '../lib/comunicacao.mjs';
+import { createGestao, projectLabel, PROJ_STATUS, PROJ_TIPO, PRIORIDADES } from '../lib/gestao.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
@@ -56,6 +57,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const comunicacao = createComunicacao(client);
   const coordenacao = createCoordenacao(client, { whatsapp });
   const consultas = createConsultas(client);
+  const gestao = createGestao(client);
   return [
     {
       name: 'guia',
@@ -212,6 +214,220 @@ export function buildTools(portal, client, { remote = false } = {}) {
         if (a.confirmado !== true) return { text: 'Não criei: mostre a tarefa ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
         const t = await reunioes.createTask({ projectId: a.project_id, titulo: a.titulo, descricao: a.descricao, responsavel: a.responsavel, prazo: a.prazo, prioridade: a.prioridade, checklist: a.checklist || [], origem: a.origem });
         return `Tarefa criada: "${t.title}" (id ${t.id})${a.responsavel ? '; o responsável foi notificado no portal' : ''}.`;
+      },
+    },
+    {
+      name: 'criar_projeto',
+      description: 'Cria um projeto no portal, como em projetos.html: quem cria e o responsável entram como gestores e o responsável é avisado. Pede a permissão de criar ou gerenciar projetos. Mostre o resumo ao membro e só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          nome: { type: 'string', maxLength: 120 },
+          descricao: { type: 'string', maxLength: 4000 },
+          objetivo: { type: 'string', maxLength: 4000 },
+          problema: { type: 'string', maxLength: 4000 },
+          publico_alvo: { type: 'string', maxLength: 4000 },
+          funcionalidades: { type: 'string', maxLength: 4000 },
+          beneficios: { type: 'string', maxLength: 4000 },
+          criterios_sucesso: { type: 'string', maxLength: 4000 },
+          tipo: { type: 'string', enum: PROJ_TIPO },
+          prioridade: { type: 'string', enum: PRIORIDADES },
+          status: { type: 'string', enum: PROJ_STATUS },
+          data_inicio: { type: 'string', description: 'AAAA-MM-DD' },
+          data_entrega: { type: 'string', description: 'AAAA-MM-DD' },
+          responsavel: { type: 'string', description: 'Nome do membro responsável.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['nome', 'confirmado'],
+      },
+      annotations: { title: 'Criar projeto', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não criei: mostre o projeto ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
+        const p = await gestao.createProject(a);
+        return `Projeto criado: "${p.name}" (id ${p.id}), ${projectLabel(p.status)}${p.responsavel ? `; responsável ${p.responsavel}, avisado no portal` : ''}.`;
+      },
+    },
+    {
+      name: 'editar_projeto',
+      description: 'Edita um projeto: nome, textos, tipo, prioridade, status, datas ou responsável. Só os campos enviados mudam. Só gestor do projeto ou a diretoria. Mostre a mudança e só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projeto_id: idProp('Projeto'),
+          nome: { type: 'string', maxLength: 120 },
+          descricao: { type: 'string', maxLength: 4000 },
+          objetivo: { type: 'string', maxLength: 4000 },
+          problema: { type: 'string', maxLength: 4000 },
+          publico_alvo: { type: 'string', maxLength: 4000 },
+          funcionalidades: { type: 'string', maxLength: 4000 },
+          beneficios: { type: 'string', maxLength: 4000 },
+          criterios_sucesso: { type: 'string', maxLength: 4000 },
+          tipo: { type: 'string', enum: PROJ_TIPO },
+          prioridade: { type: 'string', enum: PRIORIDADES },
+          status: { type: 'string', enum: PROJ_STATUS },
+          data_inicio: { type: 'string', description: 'AAAA-MM-DD, ou vazio para limpar' },
+          data_entrega: { type: 'string', description: 'AAAA-MM-DD, ou vazio para limpar' },
+          responsavel: { type: 'string', description: 'Nome do novo responsável (vazio tira).' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['projeto_id', 'confirmado'],
+      },
+      annotations: { title: 'Editar projeto', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: mostre a mudança ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
+        const p = await gestao.editProject(a);
+        return `Projeto "${p.name}" atualizado (${p.mudou.join(', ')}). Status: ${projectLabel(p.status)}.`;
+      },
+    },
+    {
+      name: 'excluir_projeto',
+      description: 'Exclui um projeto com tarefas, participantes e histórico. Não tem volta. Só gestor do projeto ou a diretoria. Exige o nome exato do projeto em nome_confirmacao e confirmado=true depois de o membro confirmar que quer apagar.',
+      inputSchema: {
+        type: 'object',
+        properties: { projeto_id: idProp('Projeto'), nome_confirmacao: { type: 'string' }, confirmado: { type: 'boolean' } },
+        required: ['projeto_id', 'nome_confirmacao', 'confirmado'],
+      },
+      annotations: { title: 'Excluir projeto', ...WRITE, destructiveHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não excluí: confirme com o membro que quer apagar o projeto e tudo dentro dele, e chame de novo com confirmado=true.', isError: true };
+        const p = await gestao.deleteProject(a);
+        return `Projeto "${p.name}" excluído.`;
+      },
+    },
+    {
+      name: 'participantes_projeto',
+      description: 'Participantes de um projeto: adicionar (avisa a pessoa), remover, trocar funções (ex.: ["Frontend", "QA"]) ou dar/tirar gestão (gestor=true/false). Só gestor do projeto ou a diretoria. Membro pelo nome. Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projeto_id: idProp('Projeto'),
+          acao: { type: 'string', enum: ['adicionar', 'remover', 'funcoes', 'gestor'] },
+          membro: { type: 'string', description: 'Nome do membro.' },
+          funcoes: { type: 'array', items: { type: 'string' }, maxItems: 8 },
+          gestor: { type: 'boolean' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['projeto_id', 'acao', 'membro', 'confirmado'],
+      },
+      annotations: { title: 'Participantes do projeto', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: mostre a mudança ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
+        const r = await gestao.participants(a);
+        const what = { adicionar: 'entrou em', remover: 'saiu de', funcoes: 'teve as funções trocadas em', gestor: r.gestor ? 'agora é gestor de' : 'deixou de ser gestor de' }[r.acao];
+        return `${r.membro} ${what} "${r.projeto}"${r.roles?.length && r.acao !== 'remover' ? ` (funções: ${r.roles.join(', ')})` : ''}.`;
+      },
+    },
+    {
+      name: 'editar_tarefa',
+      description: 'Edita uma tarefa: título, descrição, prazo, hora, prioridade, categoria, observações ou responsável (avisa o novo responsável). Só gestor do projeto; o responsável muda só checklist e nota de execução (use checklist e nota_execucao). Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          task_id: idProp('Tarefa'),
+          titulo: { type: 'string', maxLength: 200 },
+          descricao: { type: 'string', maxLength: 4000 },
+          prazo: { type: 'string', description: 'AAAA-MM-DD, ou vazio para limpar' },
+          prazo_hora: { type: 'string', description: 'HH:MM, ou vazio para limpar' },
+          prioridade: { type: 'string', enum: PRIORIDADES },
+          categoria: { type: 'string', description: 'Nome da categoria do projeto (vazio tira).' },
+          observacoes: { type: 'string', maxLength: 2000 },
+          responsavel: { type: 'string', description: 'Nome do novo responsável.' },
+          sem_responsavel: { type: 'boolean', description: 'true deixa a tarefa sem responsável.' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['task_id', 'confirmado'],
+      },
+      annotations: { title: 'Editar tarefa', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: mostre a mudança ao membro e chame de novo com confirmado=true depois que ele aprovar.', isError: true };
+        const t = await gestao.editTask(a);
+        return `Tarefa "${t.title}" atualizada (${t.mudou.join(', ')})${t.mudou.includes('assigned_to') && t.assigned_to ? '; o novo responsável foi avisado no portal' : ''}.`;
+      },
+    },
+    {
+      name: 'excluir_tarefa',
+      description: 'Exclui uma tarefa do projeto. Não tem volta. Só gestor do projeto. Só envie confirmado=true depois de o membro confirmar.',
+      inputSchema: { type: 'object', properties: { task_id: idProp('Tarefa'), confirmado: { type: 'boolean' } }, required: ['task_id', 'confirmado'] },
+      annotations: { title: 'Excluir tarefa', ...WRITE, destructiveHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não excluí: confirme com o membro e chame de novo com confirmado=true.', isError: true };
+        const t = await gestao.deleteTask(a);
+        return `Tarefa "${t.title}" excluída.`;
+      },
+    },
+    {
+      name: 'marcar_reuniao',
+      description: 'Marca uma reunião no portal (aba Reuniões) e convoca os convidados, que recebem o aviso. Diretoria ou quem tem a permissão de gerenciar reuniões. pedido_id aprova o pedido de reunião que deu origem. Convidados pelo nome. Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          titulo: { type: 'string', maxLength: 200 },
+          data: { type: 'string', description: 'AAAA-MM-DD' },
+          hora: { type: 'string', description: 'HH:MM' },
+          descricao: { type: 'string', maxLength: 4000 },
+          convidados: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 60 },
+          pedido_id: idProp('Pedido de reunião (opcional)'),
+          confirmado: { type: 'boolean' },
+        },
+        required: ['titulo', 'data', 'hora', 'convidados', 'confirmado'],
+      },
+      annotations: { title: 'Marcar reunião', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não marquei: mostre a reunião e os convidados ao membro e chame de novo com confirmado=true.', isError: true };
+        const m = await gestao.scheduleMeeting(a);
+        return `Reunião "${m.title}" marcada para ${fmtDate(m.data)} às ${m.hora} (id ${m.id}). Convocados e avisados: ${m.convidados.join(', ')}.${m.pedido ? ' O pedido de reunião foi aprovado.' : ''}`;
+      },
+    },
+    {
+      name: 'gerenciar_reuniao',
+      description: 'Muda uma reunião marcada: concluir ou cancelar (avisa os convidados), convidar mais gente (avisa os novos) ou excluir. Diretoria ou quem tem a permissão de gerenciar reuniões. O id vem da ferramenta reunioes. Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          reuniao_id: idProp('Reunião agendada'),
+          acao: { type: 'string', enum: ['concluir', 'cancelar', 'convidar', 'excluir'] },
+          convidados: { type: 'array', items: { type: 'string' }, maxItems: 60 },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['reuniao_id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerenciar reunião', ...WRITE, destructiveHint: true },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: confirme com o membro e chame de novo com confirmado=true.', isError: true };
+        const r = await gestao.manageMeeting(a);
+        if (r.acao === 'convidar') return `Convidados para "${r.title}" e avisados: ${r.convidados.join(', ')}.`;
+        if (r.acao === 'excluir') return `Reunião "${r.title}" excluída.`;
+        return `Reunião "${r.title}" ${r.acao === 'concluir' ? 'concluída' : 'cancelada'}; ${r.avisados} convidado(s) avisado(s).`;
+      },
+    },
+    {
+      name: 'pedir_reuniao',
+      description: 'Qualquer membro pede uma reunião à diretoria (vai para a fila de pedidos no portal). Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: { motivo: { type: 'string', maxLength: 300 }, descricao: { type: 'string', maxLength: 2000 }, data_sugerida: { type: 'string', description: 'AAAA-MM-DD' }, confirmado: { type: 'boolean' } },
+        required: ['motivo', 'confirmado'],
+      },
+      annotations: { title: 'Pedir reunião', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não enviei: mostre o pedido ao membro e chame de novo com confirmado=true.', isError: true };
+        const r = await gestao.requestMeeting(a);
+        return `Pedido de reunião enviado: "${r.motivo}"${r.data_sugerida ? `, sugerida para ${fmtDate(r.data_sugerida)}` : ''}. A diretoria vê na fila de pedidos.`;
+      },
+    },
+    {
+      name: 'responder_pedido_reuniao',
+      description: 'Recusa ou exclui um pedido de reunião. Para aprovar, use marcar_reuniao com o pedido_id. Diretoria ou quem tem a permissão de gerenciar reuniões. Só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: { pedido_id: idProp('Pedido de reunião'), acao: { type: 'string', enum: ['recusar', 'excluir'] }, confirmado: { type: 'boolean' } },
+        required: ['pedido_id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Responder pedido de reunião', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: confirme com o membro e chame de novo com confirmado=true.', isError: true };
+        const r = await gestao.answerRequest(a);
+        return `Pedido "${r.motivo}" ${r.acao === 'recusar' ? 'recusado' : 'excluído'}.`;
       },
     },
     {

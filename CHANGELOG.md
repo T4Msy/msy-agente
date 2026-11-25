@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0 — 2026-11-25
+
+- Gestão de projetos pelo agente, como em projetos.html:
+  - `criar_projeto` e `editar_projeto` (quem cria e o responsável viram gestores; o responsável é avisado).
+  - `participantes_projeto`: adicionar, remover, trocar funções e dar ou tirar gestão.
+  - `editar_tarefa` (inclusive reatribuir, com aviso ao novo responsável) e `excluir_tarefa`.
+  - `excluir_projeto`, que pede o nome exato do projeto.
+- Reuniões pelo agente, como na aba Reuniões: `marcar_reuniao` (convoca e avisa; aprova o pedido de origem),
+  `gerenciar_reuniao` (concluir, cancelar, convidar, excluir), `pedir_reuniao` e `responder_pedido_reuniao`.
+- Quando a RLS barra uma edição sem erro (zero linhas), o agente diz que a conta não tem permissão em vez de dizer que fez.
+- Skills de gestor, reuniões, rotina e diretoria apontam para as ferramentas novas.
+
 ## 0.9.0 — 2026-11-25
 
 - Consultas que dão contexto ao agente, com as permissões do portal:
