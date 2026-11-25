@@ -42,7 +42,7 @@ alguém: "sem entrega registrada" é fato do portal, não acusação.
 Entrega: na conversa e, se o membro quiser, **no grupo do WhatsApp pelo bot Corvus**:
 1. `whatsapp_grupos` → ache o grupo da reunião (pelo nome) e confirme com o membro.
 2. Encurte para o WhatsApp: até ~1.500 caracteres, sem a pauta detalhada se ficar longo. O markdown é convertido.
-3. Mostre o texto e o destino; com o sim, `enviar_whatsapp` (confirmado=true, `nome` = nome do grupo).
+3. Envie com `enviar_whatsapp` (`nome` = nome do grupo) e mostre ao membro o que foi e para onde.
 Só funciona para quem está liberado em "Quem pode usar o bot" (Central do Bot); para os outros, o portal recusa e o
 resumo fica na conversa.
 
@@ -51,8 +51,7 @@ Com agendador do host (Claude Code/Codex), crie uma rotina diária pela manhã (
 America/Sao_Paulo e o grupo de destino):
 "Use msy-portal: reunioes (dias=1). Para cada reunião de hoje, rode preparar_reuniao, escreva o resumo no formato
 da skill msy-reunioes e envie no grupo <nome> (grupo=<id>) com enviar_whatsapp. Este envio automático está
-autorizado por mim; use confirmado=true." Sem essa autorização escrita na rotina, a rotina só entrega o resumo ao
-membro. Para a call semanal, uma rotina no dia dela basta.
+autorizado por mim." Sem essa autorização escrita na rotina, a rotina só entrega o resumo ao membro. Para a call semanal, uma rotina no dia dela basta.
 
 ## 2. Durante: gravar e transcrever
 
