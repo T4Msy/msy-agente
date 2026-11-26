@@ -23,6 +23,7 @@ import { createMarketing, calendarText, leadsText, leadText, catalogText, propos
 import { createMembro, libraryText, profileText, swapsText, BIB_CATEGORIAS, SUG_CATEGORIAS, SUG_STATUS, EVENTO_ACOES } from '../lib/membro.mjs';
 import { createConsultas, membersText, rankingText, icmText, commissionsText, monthlyText } from '../lib/consultas.mjs';
 import { createCoordenacao, healthText, presenceText, teamText, huginnText, panelText, weeklyReport, suggestionsText, corvusText, CORVUS_ACOES, DISPARO_MAX } from '../lib/coordenacao.mjs';
+import { createAtividades, activitiesText, activityText, manageText, ATIVIDADE_FILTROS, ATIVIDADE_ACOES } from '../lib/atividades.mjs';
 import { listGuides, readGuide, listPrompts, getPrompt } from '../lib/guias.mjs';
 import { SKILLS_EXTENSION, skillsList, skillsGet, isSkillUri, readSkillResource, readSkillDirectory, skillResourcesForList } from '../lib/skills-mcp.mjs';
 
@@ -32,7 +33,7 @@ const LOGIN_CMD = `node "${path.join(ROOT, 'bin', 'msy.mjs')}" login`;
 
 const BASE_INSTRUCTIONS = [
   'Agente MSY: conexão com o Portal de Membro da Masayoshi (portalmsy.site), com a conta do membro que está usando o agente. Fale em português do Brasil, direto e sem jargão.',
-  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), responder e registrar presença, publicar comunicados e escrever no Jornal MSY, acompanhar a Ordem (saúde dos membros, presenças, atividades, Huginn, painel e relatório semanal), controlar o Corvus, enviar avisos no WhatsApp pelo bot Corvus, cuidar do marketing e comercial (calendário de conteúdo, leads, follow-up, tabela de preços e proposta), e para',
+  'Use para saber quem é o membro, o cargo e os projetos dele, as tarefas, prazos, reuniões, eventos e notificações, preparar reuniões, registrar atas, criar tarefas (gestor), planejar eventos (histórico, briefing, criar e editar, retrospectiva), responder e registrar presença, publicar comunicados e escrever no Jornal MSY, acompanhar a Ordem (saúde dos membros, presenças, atividades — listar todas, ver entregas, reabrir, prorrogar, concluir, cancelar, editar —, Huginn, painel e relatório semanal), controlar o Corvus, enviar avisos no WhatsApp pelo bot Corvus, cuidar do marketing e comercial (calendário de conteúdo, leads, follow-up, tabela de preços e proposta), e para',
   'iniciar uma tarefa, atualizar o checklist e a nota de execução e mandar para revisão. As regras do portal valem:',
   'o agente só vê e muda o que o membro pode ver e mudar. Gestor pode aprovar tarefa ou pedir ajustes pelo agente (revisar_tarefa), com o banco conferindo que é gestor do projeto.',
   DATA_NOTICE,
@@ -68,6 +69,7 @@ export function buildTools(portal, client, { remote = false } = {}) {
   const supervisao = createSupervisao(client);
   const marketing = createMarketing(client);
   const meta = createMeta(client);
+  const atividades = createAtividades(client);
   return [
     {
       name: 'guia',
@@ -813,6 +815,56 @@ export function buildTools(portal, client, { remote = false } = {}) {
       run: async (a) => {
         const r = await coordenacao.createActivity(a);
         return `Atividade "${r.title}" criada para ${r.membros.join(', ')} · prazo ${fmtDate(r.deadline, r.time)} · prioridade ${r.priority}. Cada um foi notificado no portal (${url}/atividades.html).`;
+      },
+    },
+    {
+      name: 'atividades',
+      description: 'Lista atividades da Ordem com QUALQUER status (inclusive concluídas, incompletas e canceladas), com o atividade_id para ver ou gerir. Filtra por membro, status, trecho do título e período. Use para achar a atividade de alguém antes de reabrir, prorrogar ou encerrar.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          membro: { type: 'string', description: 'Nome (ou parte) do responsável.' },
+          status: { type: 'string', enum: ATIVIDADE_FILTROS, description: 'Padrão: todas.' },
+          busca: { type: 'string', description: 'Trecho do título.' },
+          dias: { type: 'integer', minimum: 1, maximum: 365, description: 'Só prazos dos últimos N dias em diante.' },
+          limite: { type: 'integer', minimum: 1, maximum: 100, description: 'Padrão 25.' },
+        },
+      },
+      annotations: { title: 'Atividades (todas)', ...READ },
+      run: async (a) => activitiesText(await atividades.list(a)),
+    },
+    {
+      name: 'atividade',
+      description: 'Detalhe de uma atividade da Ordem: descrição, responsável e colaboradores, prazo (original e prorrogado), se aceita envio agora, anexos e todas as entregas (texto, arquivo, atraso, entrega_id).',
+      inputSchema: { type: 'object', properties: { atividade_id: idProp('Atividade') }, required: ['atividade_id'] },
+      annotations: { title: 'Atividade', ...READ },
+      run: async (a) => activityText(await atividades.detail(a)),
+    },
+    {
+      name: 'gerir_atividade',
+      description: 'Gere uma atividade da Ordem como a tela atividades.html: reabrir (concluída, incompleta ou cancelada volta a aceitar entrega; se o prazo já passou, estende até amanhã 23:59 ou até o prazo dado), prorrogar (prazo estendido), tirar_prorrogacao, concluir, incompleta (concluir como incompleta), cancelar, editar (titulo, descricao, prioridade, prazo, hora, responsavel), excluir (só diretoria) e remover_entrega (entrega_id). Avisa o responsável no portal (avisar=false para não avisar; cancelar só avisa com avisar=true). Pede as permissões de atividade do portal. Quando o membro mandou fazer, faça; se a ação não foi pedida, mostre e só envie confirmado=true depois do sim.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          atividade_id: idProp('Atividade'),
+          acao: { type: 'string', enum: ATIVIDADE_ACOES },
+          prazo: { type: 'string', description: 'AAAA-MM-DD: novo prazo (reabrir, prorrogar) ou prazo original (editar).' },
+          hora: { type: 'string', description: 'HH:MM (padrão 23:59).' },
+          titulo: { type: 'string', maxLength: 160 },
+          descricao: { type: 'string', maxLength: 6000 },
+          prioridade: { type: 'string', enum: ['baixa', 'media', 'alta'] },
+          responsavel: { type: 'string', description: 'editar: nome do novo responsável (é avisado).' },
+          entrega_id: { type: 'string', description: 'remover_entrega: id da entrega (ferramenta atividade).' },
+          motivo: { type: 'string', maxLength: 300, description: 'Vai no aviso ao membro.' },
+          avisar: { type: 'boolean' },
+          confirmado: { type: 'boolean' },
+        },
+        required: ['atividade_id', 'acao', 'confirmado'],
+      },
+      annotations: { title: 'Gerir atividade', ...WRITE },
+      run: async (a) => {
+        if (a.confirmado !== true) return { text: 'Não mudei nada: confirme com o membro e chame de novo com confirmado=true.', isError: true };
+        return manageText(await atividades.manage(a), url);
       },
     },
     {

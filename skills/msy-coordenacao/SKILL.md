@@ -7,7 +7,7 @@ description: Coordenação da Ordem — acompanhar quem está sumindo (presença
 
 Objetivo: ninguém some sem alguém perceber, e a cobrança acontece cedo, no privado e com respeito.
 Ferramentas do `msy-portal`: `saude_membros`, `presencas`, `atividades_equipe`, `alertas_huginn`,
-`registrar_observacao`, `criar_atividade`, a Central da Supervisão (seção 5), e para falar com a pessoa `enviar_whatsapp` (privado, `membro`).
+`registrar_observacao`, `criar_atividade`, `atividades` / `atividade` / `gerir_atividade` (achar qualquer atividade, ver entregas, reabrir, prorrogar, encerrar), a Central da Supervisão (seção 5), e para falar com a pessoa `enviar_whatsapp` (privado, `membro`).
 Visão da semana para a diretoria: skill `msy-diretoria`.
 
 ## Como agir
@@ -42,7 +42,7 @@ Se não responder em uma semana, uma segunda tentativa; depois disso, leve para 
 ## 3. Cobrar atividade
 
 - Lembrete antes do prazo, no privado, com o nome da atividade e o prazo exato.
-- Atrasou: pergunte o que travou e combine uma data nova. Prorrogar prazo é no portal (atividades.html).
+- Atrasou: pergunte o que travou e combine uma data nova e prorrogue com `gerir_atividade` (acao=prorrogar).
 - Cobrança costuma funcionar melhor no privado e sem comparar com outro membro; se o membro pedir no grupo, mande.
 
 ## 4. Criar atividade
@@ -50,6 +50,11 @@ Se não responder em uma semana, uma segunda tentativa; depois disso, leve para 
 `criar_atividade` cria uma cópia para cada membro e notifica cada um. Antes, confirme com o membro:
 título que diz a entrega, descrição com o que entregar, como e onde, prazo realista (data e hora) e prioridade.
 Atividade em dupla ou grupo (colaborativa) e anexos se fazem no portal.
+
+Depois de criada, `gerir_atividade` faz o resto da tela: reabrir (para o membro mandar a versão corrigida: se o prazo
+venceu, já estende até amanhã 23:59 ou até a data dada), prorrogar, encerrar (concluir ou incompleta), cancelar,
+editar ou trocar o responsável, e remover uma entrega errada. Ache o `atividade_id` com `atividades`
+(filtre por membro; inclui concluídas) e veja as entregas com `atividade`.
 
 ## 5. Huginn
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.16.0 · 26/11/2026
+
+Atividades da Ordem com as mesmas ações da tela atividades.html:
+- `atividades`: lista com qualquer status (concluídas, incompletas e canceladas também), filtros por membro, status, título e período, e o `atividade_id` de cada uma.
+- `atividade`: detalhe com descrição, prazo original e prorrogado, se aceita envio agora, anexos e as entregas (com `entrega_id`).
+- `gerir_atividade`: reabrir, prorrogar, tirar_prorrogacao, concluir, incompleta, cancelar, editar (inclusive trocar o responsável), excluir (só diretoria) e remover_entrega. Reabrir uma atividade com prazo vencido já estende o prazo (amanhã 23:59 ou o prazo dado), senão o portal travaria o envio. Avisa o membro no portal. As permissões conferidas são as da tela (`concluir_atividades` para encerrar/reabrir/cancelar; gerenciar, criar ou editar atividades para prorrogar/editar).
+- `atividades_equipe` agora mostra o `atividade_id`.
+- Último acesso sem dado aparece como "sem registro", não "nunca" (o portal não gravava `last_portal_activity_at`; a sincronização pelo banco está em `Portal-Membro-Msy/supabase/migrations/20261126_ultimo_acesso.sql`).
+
 ## 0.15.0 · 25/11/2026
 
 Ponte da Meta, só leitura, para quem tem Marketing e Comercial (ou diretoria):
